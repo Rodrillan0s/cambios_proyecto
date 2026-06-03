@@ -3,67 +3,78 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Auth\Events\PasswordReset;
+use App\Models\User;
+use App\Models\TokenRecuperacion;
+use App\Services\BitacoraService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
-use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class NewPasswordController extends Controller
 {
     /**
-     * Display the password reset view.
+     * Mostrar la vista de restablecimiento de contraseña.
      */
-    public function create(Request $request): Response
+    public function create(Request $request, string $token): Response
     {
+        $tokenHash = hash('sha256', $token);
+
+        // Verificamos preventivamente si el token es válido y está vigente
+        $tokenValido = TokenRecuperacion::where('token_hash', $tokenHash)
+            ->where('usado', false)
+            ->where('fecha_expiracion', '>', now())
+            ->exists();
+
         return Inertia::render('Auth/ResetPassword', [
-            'email' => $request->email,
-            'token' => $request->route('token'),
+            'token' => $token,
+            'errorToken' => !$tokenValido // Si no es válido, pasará como true
         ]);
     }
 
     /**
-     * Handle an incoming new password request.
-     *
-     * @throws ValidationException
+     * Manejar la solicitud de nueva contraseña.
      */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
             'token' => 'required',
-            'email' => 'required|email',
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'password' => 'required|confirmed|min:8',
         ]);
 
-        // Here we will attempt to reset the user's password. If it is successful we
-        // will update the password on an actual user model and persist it to the
-        // database. Otherwise we will parse the error and return the response.
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user) use ($request) {
-                $user->forceFill([
-                    'password' => Hash::make($request->password),
-                    'remember_token' => Str::random(60),
-                ])->save();
+        $tokenHash = hash('sha256', $request->token);
 
-                event(new PasswordReset($user));
-            }
-        );
+        $tokenRegistro = TokenRecuperacion::where('token_hash', $tokenHash)
+            ->where('usado', false)
+            ->where('fecha_expiracion', '>', now())
+            ->first();
 
-        // If the password was successfully reset, we will redirect the user back to
-        // the application's home authenticated view. If there is an error we can
-        // redirect them back to where they came from with their error message.
-        if ($status == Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('status', __($status));
+        if (!$tokenRegistro) {
+            return back()->withErrors(['token' => 'El enlace de recuperación es inválido o ha expirado.']);
         }
 
-        throw ValidationException::withMessages([
-            'email' => [trans($status)],
-        ]);
+        $user = User::find($tokenRegistro->id_usuario);
+
+        $user->forceFill([
+            'password' => Hash::make($request->password),
+        ])->save();
+
+        $tokenRegistro->update(['usado' => true]);
+
+        TokenRecuperacion::where('id_usuario', $user->id_usuario)
+            ->where('usado', false)
+            ->update(['usado' => true]);
+
+        BitacoraService::registrar(
+            'SEGURIDAD',
+            'CONTRASENA_RESTABLECIDA',
+            'El usuario ' . $user->usuario . ' (' . $user->correo . ') restableció su contraseña con éxito.',
+            [
+                'IP' => $request->ip(),
+            ]
+        );
+
+        return redirect()->route('login')->with('status', 'Tu contraseña ha sido restablecida correctamente.');
     }
 }
