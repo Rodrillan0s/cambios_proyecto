@@ -9,13 +9,14 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\PostulanteController;
 use Illuminate\Support\Facades\Route;
 
+// =====================================================================
+// VISITANTES (Solo Login y Recuperación de Contraseña)
+// =====================================================================
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
-
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    // ⚠️ ATENCIÓN: Se eliminaron las rutas GET/POST de 'register' para cerrar la brecha de seguridad.
 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
@@ -35,25 +36,53 @@ Route::middleware('guest')->group(function () {
         ->name('password.store');
 });
 
+// =====================================================================
+// NÚCLEO DEL SISTEMA PROTEGIDO (Usuarios Logueados)
+// =====================================================================
 Route::middleware('auth')->group(function () {
-    Route::get('verify-email', EmailVerificationPromptController::class)
-        ->name('verification.notice');
-
-    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)
-        ->middleware(['signed', 'throttle:6,1'])
-        ->name('verification.verify');
-
-    Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-        ->middleware('throttle:6,1')
-        ->name('verification.send');
-
-    Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])
-        ->name('password.confirm');
-
+    
+    // --- RUTAS POR DEFECTO DE BREEZE ---
+    Route::get('verify-email', EmailVerificationPromptController::class)->name('verification.notice');
+    Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])->middleware('throttle:6,1')->name('verification.send');
+    Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
-
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
-        ->name('logout');
+    // --- MÓDULO 1: ADMINISTRACIÓN DE USUARIOS INTERNOS Y BITÁCORA ---
+    Route::get('/bitacora', function() { return 'Consulta de Bitácora'; })
+        ->middleware('permiso:consultar_bitacora');
+        
+    // CRUD Interno de Usuarios (El controlador que refactorizamos)
+    Route::get('/usuarios', [RegisteredUserController::class, 'index'])
+        ->middleware('permiso:listar_usuarios')->name('usuarios.index');
+    Route::get('/usuarios/crear', [RegisteredUserController::class, 'create'])
+        ->middleware('permiso:registrar_usuario')->name('usuarios.create');
+    Route::post('/usuarios', [RegisteredUserController::class, 'store'])
+        ->middleware('permiso:registrar_usuario')->name('usuarios.store');
+    Route::put('/usuarios/{id}', [RegisteredUserController::class, 'update'])
+        ->middleware('permiso:modificar_usuario')->name('usuarios.update');
+
+    // --- MÓDULO 2: POSTULANTES (Flujo 2 y 3: Gestión Interna) ---
+    Route::get('/postulantes', [PostulanteController::class, 'index'])
+        ->middleware('permiso:listar_postulantes')->name('postulantes.index');
+    
+    Route::post('/postulantes', [PostulanteController::class, 'store'])
+        ->middleware('permiso:registrar_postulante')->name('postulantes.store');
+        
+    Route::put('/postulantes/{id}', [PostulanteController::class, 'update'])
+        ->middleware('permiso:modificar_postulante')->name('postulantes.update');
+        
+    Route::delete('/postulantes/{id}', [PostulanteController::class, 'destroy'])
+        ->middleware('permiso:eliminar_postulante')->name('postulantes.destroy');
+
+    Route::post('/postulantes/{id}/validar-documentos', [PostulanteController::class, 'validarDocumentos'])
+        ->middleware('permiso:validar_documentos');
+        
+    Route::get('/postulantes/{id}/documentos', [PostulanteController::class, 'visualizarDocumentos'])
+        ->middleware('permiso:visualizar_documentos');
+        
+    Route::post('/postulantes/importar', [PostulanteController::class, 'importar'])
+        ->middleware('permiso:importar_postulantes')->name('postulantes.importar');
 });

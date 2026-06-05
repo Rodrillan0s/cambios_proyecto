@@ -12,6 +12,7 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Services\BitacoraService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -56,6 +57,13 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $permisos = DB::table('cup.v_usuario_permisos')
+            ->where('id_usuario', $user->id_usuario)
+            ->pluck('nombre_permiso')
+            ->toArray();
+
+        $request->session()->put('permisos', $permisos);
+
         $idSesion = DB::table('cup.t_sesiones')->insertGetId([
             'id_usuario' => $user->id_usuario,
             'ip_direccion' => $request->ip(),
@@ -64,6 +72,7 @@ class AuthenticatedSessionController extends Controller
         ],'id_sesion');
 
         $request->session()->put('id_sesion', $idSesion);
+        
         BitacoraService::registrar(
             'AUTENTICACIÓN', 
             'LOGIN', 
@@ -73,7 +82,7 @@ class AuthenticatedSessionController extends Controller
             ]
         );
 
-     return redirect()->intended(route('dashboard', absolute: false));
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 
     /**
@@ -81,12 +90,12 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-      $user = Auth::user();
-      $idUsuario = $user ? $user->id_usuario : null;
-      $nombreUsuario = $user ? $user->nombre : 'Desconocido';
-      $correoUsuario = $user ? $user->correo : 'Desconocido';
+        $user = Auth::user();
+        $idUsuario = $user ? $user->id_usuario : null;
+        $nombreUsuario = $user ? $user->nombre : 'Desconocido';
+        $correoUsuario = $user ? $user->correo : 'Desconocido';
 
-      $idSesion = session('id_sesion');
+        $idSesion = session('id_sesion');
         if ($idSesion) {
             DB::table('cup.t_sesiones')
                 ->where('id_sesion', $idSesion)
@@ -100,16 +109,17 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-     BitacoraService::registrar(
-          'AUTENTICACIÓN',
-           'LOGOUT',
-           'Usuario ' . $nombreUsuario . ' (' . $correoUsuario . ') cerró sesión.',
+        BitacoraService::registrar(
+            'AUTENTICACIÓN',
+            'LOGOUT',
+            'Usuario ' . $nombreUsuario . ' (' . $correoUsuario . ') cerró sesión.',
             [
                'IP:' => $request->ip()
             ],
             $idUsuario,
             $idSesion
-     );
+        );
+        
         return redirect('/');
     }
 }
