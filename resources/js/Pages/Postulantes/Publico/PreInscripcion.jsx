@@ -19,8 +19,9 @@ export default function PreInscripcion({ carreras, paypalClientId }) {
         foto_bachiller: null, // Archivo del Paso 2
         codigo_bachiller: '', fecha_bachiller: '', nombre_colegio: '', tipo_colegio: '', turno: '',
         id_carrera_1: '', id_carrera_2: '',
-        modalidad: '',     
-        paypal_order_id: '', paypal_monto: '70.00'
+        modalidad: '',  
+        paypal_order_id: '',    
+        paypal_monto: '70.00'
     });
 
     // Restaurar SOLO los textos del localStorage para evitar corromper los archivos en memoria RAM
@@ -142,7 +143,7 @@ export default function PreInscripcion({ carreras, paypalClientId }) {
 
                     <div className={step === 3 ? 'block' : 'hidden'}>
                         {/* Inyección directa de paypalClientId para cargar el SDK oficial */}
-                        <PasoPago data={data} processing={processing} errors={errors} paypalClientId={paypalClientId} onBack={() => setStep(2)} onSuccessPayment={handleFinalizarRegistro} />
+                        <PasoPago data={data}  setData={setData}  processing={processing} errors={errors} paypalClientId={paypalClientId} onBack={() => setStep(2)} onSuccessPayment={handleFinalizarRegistro} />
                     </div>
                 </div>
             </main>

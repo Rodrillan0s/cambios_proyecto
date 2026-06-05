@@ -27,7 +27,10 @@ Route::post('/preinscripcion/validar-ia', [PostulanteController::class, 'validar
 Route::post('/preinscripcion/completar', [PostulanteController::class, 'storePublico'])
     ->name('postulantes.store.publico');
 
-
+Route::get(
+    '/preinscripcion/comprobante/{id}',
+    [PostulanteController::class, 'comprobante']
+)->name('postulantes.comprobante');
 
 // RUTAS PROTEGIDAS DEL DASHBOARD BÁSICO
 // =====================================================================

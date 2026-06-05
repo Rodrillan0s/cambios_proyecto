@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-export default function PasoPago({ data, processing, errors, paypalClientId, onBack, onSuccessPayment }) {
+export default function PasoPago({ data, setData, processing, errors, paypalClientId, onBack, onSuccessPayment }) {
     const [sdkReady, setSdkReady] = useState(false);
     const [errorMessage, setErrorMessage] = useState(null);
 
@@ -20,10 +20,10 @@ export default function PasoPago({ data, processing, errors, paypalClientId, onB
         script.src = `https://www.paypal.com/sdk/js?client-id=${paypalClientId}&currency=USD`;
         script.type = 'text/javascript';
         script.async = true;
-        
+
         script.onload = () => setSdkReady(true);
         script.onerror = () => setErrorMessage("No se pudo conectar con los servidores seguros de PayPal.");
-        
+
         document.body.appendChild(script);
 
         return () => {
@@ -49,22 +49,21 @@ export default function PasoPago({ data, processing, errors, paypalClientId, onB
                         }]
                     });
                 },
-               onApprove: async (paypalData, actions) => {
-    try {
+                onApprove: async (paypalData, actions) => {
+                    try {
+                        const order = await actions.order.capture();
+                        console.log("ORDER:", order);
+                        console.log("ORDER ID:", order.id);
 
-        console.log("paypalData:", paypalData);
+                        // 👇 Guardar el order.id en tu objeto data
+                        setData('paypal_order_id', order.id);
+                        setData('paypal_monto', order.purchase_units[0].amount.value);
+                        onSuccessPayment(order.id); // si quieres disparar tu callback
+                    } catch (error) {
+                        console.error(error);
 
-        const order = await actions.order.capture();
-
-        console.log("ORDER:", order);
-        console.log("ORDER ID:", order.id);
-
-        onSuccessPayment(order.id);
-
-    } catch (error) {
-        console.error(error);
-    }
-},
+                    }
+                },
                 onError: (err) => {
                     console.error("PayPal Error:", err);
                     setErrorMessage("La pasarela de pago interrumpió la transacción de forma inesperada.");
@@ -83,7 +82,7 @@ export default function PasoPago({ data, processing, errors, paypalClientId, onB
             {/* ALERTA CRÍTICA: SI LOS ARCHIVOS SE PERDIERON POR RECARGAR LA PÁGINA */}
             {archivosPerdidos && (
                 <div className="p-4 bg-amber-500/10 border-2 border-amber-500/50 text-amber-400 rounded-xl text-sm font-bold text-center animate-pulse">
-                    ⚠️ Por seguridad, tus archivos se han borrado de la memoria al recargar la página. <br/>
+                    ⚠️ Por seguridad, tus archivos se han borrado de la memoria al recargar la página. <br />
                     <span className="text-xs font-normal text-amber-200 mt-2 block">
                         Debes retroceder al Paso 1 y Paso 2 para volver a adjuntar tu C.I. y tu Libreta de Bachiller antes de poder pagar.
                     </span>
@@ -98,7 +97,7 @@ export default function PasoPago({ data, processing, errors, paypalClientId, onB
 
             <div className={`bg-slate-900 border border-slate-700 p-6 rounded-2xl max-w-md mx-auto shadow-lg relative overflow-hidden ${archivosPerdidos ? 'opacity-50' : ''}`}>
                 <div className="absolute top-0 right-0 w-20 h-20 bg-emerald-500/10 rounded-bl-full -mr-4 -mt-4"></div>
-                
+
                 <h4 className="text-xs uppercase text-gray-400 font-bold mb-2">Concepto de Pago</h4>
                 <p className="text-lg text-white font-medium mb-4 border-b border-slate-700/50 pb-4">
                     Matrícula - Curso Preuniversitario (CUP)
@@ -108,7 +107,7 @@ export default function PasoPago({ data, processing, errors, paypalClientId, onB
                     <span className="text-sm text-gray-400 font-semibold">Total a Pagar:</span>
                     <span className="text-4xl font-black text-white">{data.paypal_monto} <span className="text-lg text-emerald-400">USD</span></span>
                 </div>
-                
+
                 <div className="mt-6 min-h-[150px] flex flex-col justify-center items-center bg-slate-950/50 p-4 rounded-xl border border-slate-800">
                     {archivosPerdidos ? (
                         <div className="text-xs text-amber-500/50 uppercase font-black tracking-widest">
@@ -121,7 +120,7 @@ export default function PasoPago({ data, processing, errors, paypalClientId, onB
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
                             <span className="text-sm font-semibold animate-pulse text-center">
-                                Pago aprobado. <br/> Guardando documentos en el servidor...
+                                Pago aprobado. <br /> Guardando documentos en el servidor...
                             </span>
                         </div>
                     ) : !sdkReady && !errorMessage ? (
@@ -138,7 +137,7 @@ export default function PasoPago({ data, processing, errors, paypalClientId, onB
                 <button type="button" onClick={onBack} disabled={processing} className="w-full bg-slate-800 text-gray-300 hover:text-white py-3 text-xs font-bold transition hover:bg-slate-700 rounded-xl shadow-lg border border-slate-700 disabled:opacity-50 uppercase tracking-widest">
                     ← Retroceder al paso anterior
                 </button>
-                
+
                 {/* Botón rápido para limpiar datos atascados */}
                 <button type="button" onClick={() => { localStorage.clear(); window.location.reload(); }} className="text-[10px] text-red-500/50 hover:text-red-400 underline">
                     Limpiar formulario y empezar de cero

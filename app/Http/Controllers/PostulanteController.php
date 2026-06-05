@@ -141,7 +141,6 @@ class PostulanteController extends Controller
 
         $orderData = $orderResponse->json();
 
-        // 3. Validar Reglas de Negocio Estrictas
         if (!in_array($orderData['status'], ['COMPLETED', 'APPROVED'])) {
             return back()->withErrors(['error' => 'La transacción no ha sido pagada en su totalidad.'])->withInput();
         }
@@ -151,14 +150,16 @@ class PostulanteController extends Controller
             return back()->withErrors(['error' => 'Fraude detectado: El monto pagado en PayPal no coincide con la matrícula de la FICCT.'])->withInput();
         }
 
-        /* |--------------------------------------------------------------------------
-         | TRANSACCIÓN ATÓMICA DE BASE DE DATOS Y ARCHIVOS
-         |--------------------------------------------------------------------------
-         */
         try {
-            DB::transaction(function () use ($request) {
 
-                // Preparación de Almacenamiento (Soporta disco local o en la nube como Oracle S3)
+            $idPostulanteCreado = null;
+
+            DB::transaction(function () use (
+                $request,
+                &$idPostulanteCreado
+            ) {
+
+                // Almacenamiento de archivos en el disco configurado (local, public o s3)
                 $disk = config('filesystems.default'); // Toma 'local', 'public' o 's3' del .env
 
                 $pathCedula = $request->file('foto_cedula')->storeAs(
@@ -187,7 +188,7 @@ class PostulanteController extends Controller
                     // 'ruta_cedula' => $pathCedula,
                     // 'ruta_bachiller' => $pathBachiller,
                 ], 'id_postulante');
-
+                $idPostulanteCreado = $idPostulante;
                 // Inserción en t_requisitos_postulante
                 $idRequisito = DB::table('t_requisitos_postulante')->insertGetId([
                     'id_postulante' => $idPostulante,
@@ -205,7 +206,7 @@ class PostulanteController extends Controller
                     'ruta_bachiller' => $pathBachiller,
                 ], 'id_requisito');
 
-                // Implementación de t_saldo
+                // Inserción en t_saldo
                 DB::table('t_saldo')->insert([
                     'id_requisito' => $idRequisito,
                     'saldo' => 0,
@@ -223,9 +224,29 @@ class PostulanteController extends Controller
                 ]);
 
                 // Generación de usuario
-                $primerNombre = explode(' ', trim(strtolower($request->nombre)))[0];
-                $primerApellido = explode(' ', trim(strtolower($request->apellidos)))[0];
+                function quitarAcentos($cadena)
+                {
+                    $acentos = [
+                        'á' => 'a',
+                        'é' => 'e',
+                        'í' => 'i',
+                        'ó' => 'o',
+                        'ú' => 'u',
+                        'Á' => 'A',
+                        'É' => 'E',
+                        'Í' => 'I',
+                        'Ó' => 'O',
+                        'Ú' => 'U',
+                        'ñ' => 'n',
+                        'Ñ' => 'N'
+                    ];
+                    return strtr($cadena, $acentos);
+                }
+
+                $primerNombre = explode(' ', trim(strtolower(quitarAcentos($request->nombre))))[0];
+                $primerApellido = explode(' ', trim(strtolower(quitarAcentos($request->apellidos))))[0];
                 $slugUsuario = $primerNombre . '.' . $primerApellido . substr($request->ci, -3);
+
 
                 DB::table('t_usuario')->insert([
                     'usuario' => $slugUsuario,
@@ -246,11 +267,73 @@ class PostulanteController extends Controller
                 );
             });
 
-            return redirect()->route('login')->with('status', '¡Felicidades! Tu postulación al CUP fue procesada y validada con éxito. Inicia sesión con tu código de usuario.');
+            return redirect()->route(
+                'postulantes.comprobante',
+                $idPostulanteCreado
+            );
         } catch (\Exception $e) {
-            
-          return back()->withErrors(['error' => 'Error transaccional: ' . $e->getMessage()])->withInput();
-            
+
+            return back()->withErrors(['error' => 'Error transaccional: ' . $e->getMessage()])->withInput();
         }
+    }
+public function comprobante($id): Response
+    {
+        $postulante = DB::table('t_postulante as p')
+            ->join('t_requisitos_postulante as r', 'r.id_postulante', '=', 'p.id_postulante')
+            ->leftJoin('t_pago as pa', 'pa.id_postulante', '=', 'p.id_postulante')
+            ->leftJoin('t_carrera as c1', 'r.id_carrera_1', '=', 'c1.id_carrera')
+            ->leftJoin('t_carrera as c2', 'r.id_carrera_2', '=', 'c2.id_carrera')
+            ->where('p.id_postulante', $id)
+            ->select(
+                // 1. Datos Personales
+                'p.id_postulante',
+                'p.ci',
+                DB::raw("CONCAT(p.apellidos, ' ', p.nombre) as nombre_completo"),
+                'p.fecha_nacimiento',
+                'p.sexo',
+                'p.telefono',
+                'p.correo',
+                'p.direccion',
+                'p.ciudad as provincia', 
+                
+                // 2. Información Educativa
+                'r.nombre_colegio',
+                'r.tipo_colegio',
+                'r.turno',
+                'r.fecha_bachiller',
+                'r.codigo_bachiller', 
+                'r.modalidad',
+                
+                // 3. Comprobante de Pago
+                'pa.transaccion_id',
+                'pa.fecha_pago',
+                'pa.monto',
+                'pa.metodo_pago',
+                'pa.estado as estado_pago',
+                
+                // 4. Carreras
+                'c1.id_carrera as carrera_1_codigo',
+                'c1.nombre as carrera_1_nombre',
+                'c2.id_carrera as carrera_2_codigo',
+                'c2.nombre as carrera_2_nombre'
+            )
+            ->first();
+
+        if (!$postulante) {
+            abort(404, 'Comprobante de inscripción no encontrado.');
+        }
+
+        $codigoInscripcion = 'CUP-' . date('Y') . '-' . str_pad($postulante->id_postulante, 6, '0', STR_PAD_LEFT);
+        $anioEgreso = date('Y', strtotime($postulante->fecha_bachiller));
+        $fechaEmision = now()->format('d / m / Y H:i:s');
+
+        return Inertia::render('Postulantes/Publico/Comprobante', [
+            'postulante' => $postulante,
+            'meta' => [
+                'codigo_inscripcion' => $codigoInscripcion,
+                'anio_egreso' => $anioEgreso,
+                'fecha_emision' => $fechaEmision
+            ]
+        ]);
     }
 }
