@@ -32,8 +32,10 @@ Route::get(
     [PostulanteController::class, 'comprobante']
 )->name('postulantes.comprobante');
 
+Route::post('/admin/importar-postulantes', [PostulanteController::class, 'importarCSV'])
+    ->name('admin.importar.csv');
+
 // RUTAS PROTEGIDAS DEL DASHBOARD BÁSICO
-// =====================================================================
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

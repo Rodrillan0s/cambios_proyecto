@@ -164,9 +164,9 @@ export default function PasoAcademico({ data, setData, errors, onBack, onNext })
                         >
                             <option value="">Seleccione carrera principal...</option>
                             <option value="1874">Ingeniería de Sistemas (187-4)</option>
-                            <option value="1876">Ingeniería Informática (187-6)</option>
                             <option value="1875">Ingeniería en Redes y Telecomunicaciones (187-5)</option>
-                            <option value="1877">Ingeniería en Robótica</option>
+                            <option value="1876">Ingeniería Informática (187-6)</option>
+                            <option value="3230">Ingeniería en Robótica (323-0)</option>
                         </select>
                         {errors.id_carrera_1 && <p className="text-red-500 text-xs mt-1">{errors.id_carrera_1}</p>}
                     </div>
@@ -181,9 +181,9 @@ export default function PasoAcademico({ data, setData, errors, onBack, onNext })
                         >
                             <option value="">Seleccione carrera alternativa...</option>
                             <option value="1874">Ingeniería de Sistemas (187-4)</option>
-                            <option value="1876">Ingeniería Informática (187-6)</option>
                             <option value="1875">Ingeniería en Redes y Telecomunicaciones (187-5)</option>
-                            <option value="1877">Ingeniería en Robótica</option>
+                            <option value="1876">Ingeniería Informática (187-6)</option>
+                            <option value="3230">Ingeniería en Robótica (323-0)</option>
                         </select>
                         {errors.id_carrera_2 && <p className="text-red-500 text-xs mt-1">{errors.id_carrera_2}</p>}
                     </div>
