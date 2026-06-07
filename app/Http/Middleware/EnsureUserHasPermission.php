@@ -3,20 +3,26 @@
 namespace App\Http\Middleware;
 
 use Closure;
-use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EnsureUserHasPermission
 {
-    /**
-     * Handle an incoming request.
-     */
-    public function handle(Request $request, Closure $next, string $permiso): Response
+    public function handle($request, Closure $next, string $permiso)
     {
-        $permisosUser = $request->session()->get('permisos', []);
+        $usuario = Auth::user();
 
-        if (!in_array($permiso, $permisosUser)) {
-            abort(403, 'No tienes los privilegios requeridos para realizar esta acción.');
+        if (!$usuario) {
+            abort(403, 'No autenticado');
+        }
+
+        $tienePermiso = DB::table('v_usuario_permisos')
+            ->where('id_usuario', $usuario->id_usuario)
+            ->where('nombre_permiso', $permiso)
+            ->exists();
+
+        if (!$tienePermiso) {
+            abort(403, 'No tienes permiso para realizar esta acción');
         }
 
         return $next($request);

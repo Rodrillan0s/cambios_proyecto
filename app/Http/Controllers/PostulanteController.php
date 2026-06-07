@@ -15,6 +15,8 @@ use App\Services\BitacoraService;
 use Inertia\Inertia;
 use Inertia\Response;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Services\PostulanteService;
+use Cloudinary\Api\Upload\UploadApi;
 
 class PostulanteController extends Controller
 {
@@ -144,17 +146,23 @@ class PostulanteController extends Controller
 
         // 4. Preparación de Archivos
         try {
-            $disk = config('filesystems.default');
-            $pathCedula = $request->file('foto_cedula')->storeAs(
-                "postulantes/{$request->ci}",
-                "cedula_" . time() . "." . $request->file('foto_cedula')->getClientOriginalExtension(),
-                $disk
-            );
-            $pathBachiller = $request->file('foto_bachiller')->storeAs(
-                "postulantes/{$request->ci}",
-                "bachiller_" . time() . "." . $request->file('foto_bachiller')->getClientOriginalExtension(),
-                $disk
-            );
+            $pathCedula = (new UploadApi())->upload(
+                $request->file('foto_cedula')->getRealPath(),
+                [
+                    'folder' => "postulantes/{$request->ci}",
+                    'public_id' => 'cedula_' . time(),
+                    'resource_type' => 'auto',
+                ]
+            )['secure_url'];
+
+            $pathBachiller = (new UploadApi())->upload(
+                $request->file('foto_bachiller')->getRealPath(),
+                [
+                    'folder' => "postulantes/{$request->ci}",
+                    'public_id' => 'bachiller_' . time(),
+                    'resource_type' => 'auto',
+                ]
+            )['secure_url'];
 
             $datos = $request->all();
             $datos['monto'] = $request->paypal_monto;
@@ -162,7 +170,13 @@ class PostulanteController extends Controller
             $datos['estado_pago'] = 'APROBADO';
             $datos['transaccion_id'] = $request->paypal_order_id;
 
-            $idPostulanteCreado = $this->registrarPostulanteBD($datos, $request->ip(), $pathCedula, $pathBachiller);
+            // 🔹 Aquí pasamos las URLs reales
+            $idPostulanteCreado = PostulanteService::registrarPostulanteBD(
+                $datos,
+                $request->ip(),
+                $pathCedula,
+                $pathBachiller
+            );
 
             return redirect()->route('postulantes.comprobante', $idPostulanteCreado);
         } catch (\Exception $e) {
@@ -230,225 +244,5 @@ class PostulanteController extends Controller
         ]);
     }
 
-    /**
-     * FLUJO 2: Importación Masiva (Para Administradores)
-     */
-public function importarCSV(Request $request): JsonResponse
-{
-    $request->validate([
-        'archivo' => 'required|file|mimes:csv,txt,xlsx|max:10240',
-    ]);
 
-    $file = $request->file('archivo');
-
-    // Leer todo el archivo como array (primera hoja)
-    $rows = Excel::toArray([], $file)[0];
-
-    if (empty($rows)) {
-        return response()->json(['success' => false, 'message' => 'El archivo está vacío.'], 400);
-    }
-
-    // Cabecera en la primera fila
-    $header = array_map(fn($h) => strtolower(trim($h)), $rows[0]);
-    unset($rows[0]); // quitar cabecera
-
-    $registrados = 0;
-    $duplicados = 0;
-    $errores = [];
-
-    foreach ($rows as $i => $row) {
-        if (empty(array_filter($row))) continue;
-
-        if (count($header) !== count($row)) {
-            $errores[] = "Fila " . ($i + 2) . " omitida: columnas no cuadran.";
-            continue;
-        }
-
-        $fila = array_combine($header, $row);
-        $ci = trim($fila['ci'] ?? '');
-
-        if (empty($ci)) {
-            $errores[] = "Fila " . ($i + 2) . " omitida: No se encontró el C.I.";
-            continue;
-        }
-
-        if (DB::table('t_postulante')->where('ci', $ci)->exists()) {
-            $duplicados++;
-            $errores[] = "Fila " . ($i + 2) . " omitida: El C.I. $ci ya está registrado.";
-            continue;
-        }
-
-        // 🔹 Conversión de fecha_nacimiento
-        $fechaNacimiento = $fila['fecha_nacimiento'] ?? null;
-        if (is_numeric($fechaNacimiento)) {
-            $fechaNacimiento = Carbon::createFromDate(1899, 12, 30)->addDays($fechaNacimiento)->format('Y-m-d');
-        } elseif (!empty($fechaNacimiento)) {
-            try {
-                $fechaNacimiento = Carbon::parse($fechaNacimiento)->format('Y-m-d');
-            } catch (\Exception $e) {
-                $fechaNacimiento = '2000-01-01';
-            }
-        } else {
-            $fechaNacimiento = '2000-01-01';
-        }
-
-        // 🔹 Conversión de fecha_bachiller
-        $fechaBachiller = $fila['fecha_bachiller'] ?? null;
-        if (is_numeric($fechaBachiller)) {
-            $fechaBachiller = Carbon::createFromDate(1899, 12, 30)->addDays($fechaBachiller)->format('Y-m-d');
-        } elseif (!empty($fechaBachiller)) {
-            try {
-                $fechaBachiller = Carbon::parse($fechaBachiller)->format('Y-m-d');
-            } catch (\Exception $e) {
-                $fechaBachiller = null;
-            }
-        } else {
-            $fechaBachiller = null;
-        }
-
-        $datos = [
-            'ci' => $ci,
-            'nombre' => trim($fila['nombre'] ?? 'Sin Nombre'),
-            'apellidos' => trim($fila['apellidos'] ?? 'Sin Apellidos'),
-            'fecha_nacimiento' => $fechaNacimiento,
-            'sexo' => strtoupper(trim($fila['sexo'] ?? 'M')),
-            'direccion' => trim($fila['direccion'] ?? '-'),
-            'telefono' => trim($fila['telefono'] ?? '-'),
-            'correo' => trim($fila['correo'] ?? '-'),
-            'ciudad' => trim($fila['ciudad'] ?? 'Santa Cruz'),
-
-            'codigo_bachiller' => trim($fila['codigo_bachiller'] ?? null),
-            'fecha_bachiller' => $fechaBachiller,
-            'nombre_colegio' => trim($fila['nombre_colegio'] ?? null),
-            'tipo_colegio' => trim($fila['tipo_colegio'] ?? null),
-            'turno' => trim($fila['turno'] ?? null),
-            'id_carrera_1' => intval($fila['id_carrera_1'] ?? 1874),
-            'id_carrera_2' => intval($fila['id_carrera_2'] ?? null),
-            'modalidad' => strtoupper(trim($fila['modalidad'] ?? 'PRESENCIAL')),
-
-            'monto' => 180.00,
-            'metodo_pago' => 'CAJA_FICCT',
-            'estado_pago' => 'APROBADO',
-            'transaccion_id' => 'CAJA-' . strtoupper(uniqid()),
-        ];
-
-        try {
-            $this->registrarPostulanteBD($datos, $request->ip(), null, null);
-            $registrados++;
-        } catch (\Exception $e) {
-            $errores[] = "Fila " . ($i + 2) . " (C.I. $ci) falló: " . $e->getMessage();
-        }
-    }
-
-    return response()->json([
-        'success' => true,
-        'message' => "Importación masiva completada.",
-        'data' => [
-            'registrados' => $registrados,
-            'duplicados' => $duplicados,
-            'errores' => $errores,
-        ]
-    ], 200);
-}
-    private function quitarAcentos($cadena)
-    {
-        $acentos = [
-            'á' => 'a',
-            'é' => 'e',
-            'í' => 'i',
-            'ó' => 'o',
-            'ú' => 'u',
-            'Á' => 'A',
-            'É' => 'E',
-            'Í' => 'I',
-            'Ó' => 'O',
-            'Ú' => 'U',
-            'ñ' => 'n',
-            'Ñ' => 'N'
-        ];
-        return strtr($cadena, $acentos);
-    }
-
-    private function registrarPostulanteBD(array $datos, $ip, $pathCedula = null, $pathBachiller = null)
-    {
-        $idPostulanteCreado = null;
-
-        DB::transaction(function () use ($datos, $ip, $pathCedula, $pathBachiller, &$idPostulanteCreado) {
-
-            // INSERTAR EN T_POSTULANTE
-            $idPostulante = DB::table('t_postulante')->insertGetId([
-                'ci' => $datos['ci'],
-                'nombre' => $datos['nombre'],
-                'apellidos' => $datos['apellidos'],
-                'fecha_nacimiento' => $datos['fecha_nacimiento'],
-                'sexo' => $datos['sexo'],
-                'direccion' => $datos['direccion'],
-                'telefono' => $datos['telefono'],
-                'correo' => $datos['correo'],
-                'ciudad' => $datos['ciudad'],
-            ], 'id_postulante');
-
-            $idPostulanteCreado = $idPostulante;
-
-            // INSERTAR EN T_REQUISITOS_POSTULANTE
-            $idRequisito = DB::table('t_requisitos_postulante')->insertGetId([
-                'id_postulante' => $idPostulante,
-                'codigo_bachiller' => $datos['codigo_bachiller'] ?? null,
-                'fecha_bachiller' => $datos['fecha_bachiller'] ?? null,
-                'nombre_colegio' => $datos['nombre_colegio'] ?? null,
-                'tipo_colegio' => $datos['tipo_colegio'] ?? null,
-                'turno' => $datos['turno'] ?? null,
-                'id_carrera_1' => $datos['id_carrera_1'],
-                'id_carrera_2' => $datos['id_carrera_2'],
-                'modalidad'    => $datos['modalidad'],
-                'fecha_registro' => now(),
-                'libreta' => false,
-                'ruta_cedula' => $pathCedula,
-                'ruta_bachiller' => $pathBachiller,
-            ], 'id_requisito');
-
-            // INSERTAR EN T_SALDO
-            DB::table('t_saldo')->insert([
-                'id_requisito' => $idRequisito,
-                'saldo' => 0,
-                'estado' => 'LIQUIDADO'
-            ]);
-
-            // INSERTAR EN T_PAGO
-            DB::table('t_pago')->insert([
-                'id_postulante' => $idPostulante,
-                'monto' => $datos['monto'],
-                'fecha_pago' => now(),
-                'metodo_pago' => $datos['metodo_pago'],
-                'estado' => $datos['estado_pago'],
-                'transaccion_id' => $datos['transaccion_id'] ?? null,
-            ]);
-
-            // GENERAR USUARIO Y CONTRASEÑA PARA EL POSTULANTE
-            $primerNombre = explode(' ', trim(strtolower($this->quitarAcentos($datos['nombre']))))[0];
-            $primerApellido = explode(' ', trim(strtolower($this->quitarAcentos($datos['apellidos']))))[0];
-            $slugUsuario = $primerNombre . '.' . $primerApellido . substr($datos['ci'], -3);
-
-            DB::table('t_usuario')->insert([
-                'usuario' => $slugUsuario,
-                'password' => bcrypt($datos['ci']),
-                'nombre' => $datos['nombre'] . ' ' . $datos['apellidos'],
-                'correo' => $datos['correo'],
-                'estado' => true,
-                'id_rol' => 3,
-            ]);
-
-            // REGISTRAR EN T_BITACORA
-            BitacoraService::registrar(
-                'POSTULANTES',
-                'REGISTRO EXITOSO',
-                "Inscripción procesada. C.I.: {$datos['ci']}. Método: {$datos['metodo_pago']}.",
-                ['IP' => $ip, 'Usuario_Creado' => $slugUsuario],
-                null,
-                null
-            );
-        });
-
-        return $idPostulanteCreado;
-    }
 }

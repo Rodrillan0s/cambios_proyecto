@@ -11,6 +11,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\PostulanteController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 // =====================================================================
 // VISITANTES (Solo Login y Recuperación de Contraseña)
@@ -34,13 +35,17 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+    //BORRAR LUEGO
+    Route::get('/register', function () {
+        return Inertia::render('Auth/Register');
+    });
 });
 
 // =====================================================================
 // NÚCLEO DEL SISTEMA PROTEGIDO (Usuarios Logueados)
 // =====================================================================
 Route::middleware('auth')->group(function () {
-    
+
     // --- RUTAS POR DEFECTO DE BREEZE ---
     Route::get('verify-email', EmailVerificationPromptController::class)->name('verification.notice');
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
@@ -50,10 +55,7 @@ Route::middleware('auth')->group(function () {
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
     Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    // --- MÓDULO 1: ADMINISTRACIÓN DE USUARIOS INTERNOS Y BITÁCORA ---
-    Route::get('/bitacora', function() { return 'Consulta de Bitácora'; })
-        ->middleware('permiso:consultar_bitacora');
-        
+
     // CRUD Interno de Usuarios (El controlador que refactorizamos)
     Route::get('/usuarios', [RegisteredUserController::class, 'index'])
         ->middleware('permiso:listar_usuarios')->name('usuarios.index');
@@ -67,22 +69,22 @@ Route::middleware('auth')->group(function () {
     // --- MÓDULO 2: POSTULANTES (Flujo 2 y 3: Gestión Interna) ---
     Route::get('/postulantes', [PostulanteController::class, 'index'])
         ->middleware('permiso:listar_postulantes')->name('postulantes.index');
-    
+
     Route::post('/postulantes', [PostulanteController::class, 'store'])
         ->middleware('permiso:registrar_postulante')->name('postulantes.store');
-        
+
     Route::put('/postulantes/{id}', [PostulanteController::class, 'update'])
         ->middleware('permiso:modificar_postulante')->name('postulantes.update');
-        
+
     Route::delete('/postulantes/{id}', [PostulanteController::class, 'destroy'])
         ->middleware('permiso:eliminar_postulante')->name('postulantes.destroy');
 
     Route::post('/postulantes/{id}/validar-documentos', [PostulanteController::class, 'validarDocumentos'])
         ->middleware('permiso:validar_documentos');
-        
+
     Route::get('/postulantes/{id}/documentos', [PostulanteController::class, 'visualizarDocumentos'])
         ->middleware('permiso:visualizar_documentos');
-        
+
     Route::post('/postulantes/importar', [PostulanteController::class, 'importar'])
         ->middleware('permiso:importar_postulantes')->name('postulantes.importar');
 });
