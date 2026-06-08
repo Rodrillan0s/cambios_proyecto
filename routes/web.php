@@ -1,10 +1,15 @@
 <?php
 
+use App\Http\Controllers\Admin\DocenteController;
+use App\Http\Controllers\Admin\GrupoController;
+use App\Http\Controllers\Admin\HorarioController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostulanteController;
 use App\Http\Controllers\Admin\PostulanteController as AdminPostulanteController;
 use App\Http\Controllers\Admin\BitacoraController; // 🚀 1. Importamos el controlador
 use Illuminate\Foundation\Application;
+
+
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -69,6 +74,66 @@ Route::middleware(['auth', 'verified'])->prefix('admin')->group(function () {
     Route::get('/bitacora/data', [BitacoraController::class, 'data'])
         ->middleware('permiso:consultar_bitacora')
         ->name('admin.bitacora.data');
+
+    Route::get('/grupos', [GrupoController::class, 'index'])
+        #->middleware('permiso:listar_grupos')
+        ->name('admin.grupos.index');
+
+    Route::get('/grupos/data', [GrupoController::class, 'data'])
+        #->middleware('permiso:listar_grupos')
+        ->name('admin.grupos.data');
+
+    Route::post('/grupos/generar', [GrupoController::class, 'generar'])
+        #->middleware('permiso:crear_grupos')
+        ->name('admin.grupos.generar');        
+    Route::get('/grupos/{id}', [GrupoController::class, 'detalle'])
+        #->middleware('permiso:listar_grupos')
+       ->name('admin.grupos.detalle');    
+
+Route::get('/horarios', [HorarioController::class, 'index'])
+    ->name('admin.horarios.index');
+
+Route::get('/horarios/data', [HorarioController::class, 'data'])
+    ->name('admin.horarios.data');
+
+Route::get('/grupos/{id}/horarios', [HorarioController::class, 'porGrupo'])
+    ->name('admin.grupos.horarios');
+
+Route::post('/horarios', [HorarioController::class, 'store'])
+    ->name('admin.horarios.store');
+
+Route::put('/horarios', [HorarioController::class, 'update'])
+    ->name('admin.horarios.update');
+
+Route::delete('/horarios', [HorarioController::class, 'destroy'])
+    ->name('admin.horarios.destroy');
+
+Route::get('/materias', function () {
+    return \DB::table('cup.t_materia')->get();
 });
+
+
+Route::get(
+    '/horarios/bloques/grupo/{idGrupo}',
+    [HorarioController::class, 'bloquesPorGrupo']
+)->name('admin.horarios.bloques.grupo'); 
+    Route::get(
+    '/horarios/bloques/disponibles/{idGrupo}',
+    [HorarioController::class, 'bloquesDisponibles']
+)->name('admin.horarios.bloques.disponibles');
+
+ 
+  Route::get('/docentes', function () {
+    return Inertia::render('Admin/GestionarDocentes');
+});
+
+Route::get('/docentes/data', [DocenteController::class, 'data']);
+
+Route::post('/docentes/asignar', [DocenteController::class, 'asignarMateria']);
+
+Route::delete('/docentes/quitar', [DocenteController::class, 'quitarMateria']);
+});
+
+
 
 require __DIR__ . '/auth.php';
