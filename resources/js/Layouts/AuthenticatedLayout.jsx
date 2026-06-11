@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 //authenticated layout with sidebar and topbar, using tailwindcss for styling
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;s
+    const user = usePage().props.auth.user;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
