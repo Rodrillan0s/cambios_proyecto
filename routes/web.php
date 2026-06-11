@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DesempenoFinalController;
 use App\Http\Controllers\Admin\NotaController;
 use App\Http\Controllers\Admin\LicenciaDocenteController;
 use App\Http\Controllers\Admin\ControlAsistenciaController;
@@ -113,6 +114,8 @@ Route::delete('/horarios', [HorarioController::class, 'destroy'])
 
 Route::get('/materias', function () {
     return \DB::table('cup.t_materia')->get();
+
+    
 });
 
 
@@ -198,7 +201,30 @@ Route::delete('/licencias-docente/{id}', [LicenciaDocenteController::class, 'des
     Route::post('/notas/importar', [NotaController::class, 'importar'])
     ->name('admin.notas.importar');    
 
+
+// =========================
+// DESEMPEÑO FINAL
+// =========================
+
+Route::get('/desempeno', [DesempenoFinalController::class, 'index'])
+    ->name('admin.desempeno.index');
+
+Route::get('/desempeno/data', [DesempenoFinalController::class, 'data'])
+    ->name('admin.desempeno.data');
+
+Route::post('/desempeno/generar', [DesempenoFinalController::class, 'generar'])
+    ->name('admin.desempeno.generar');
+
+Route::get('/desempeno/aprobados', [DesempenoFinalController::class, 'aprobados'])
+    ->name('admin.desempeno.aprobados');
+
+Route::get('/desempeno/reprobados', [DesempenoFinalController::class, 'reprobados'])
+    ->name('admin.desempeno.reprobados');
+
     
+
+
+        
 });
 
 

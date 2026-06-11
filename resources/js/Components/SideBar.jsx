@@ -76,21 +76,12 @@ export default function Sidebar({ user }) {
                     Control de Asistencia
                 </NavLink>
 
-                {/* ================= NUEVO ================= */}
                 <NavLink
                     href={route('admin.licencias.index')}
                     active={route().current('admin.licencias.*')}
                     className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
                 >
                     Licencias Docente
-                </NavLink>
-
-                <NavLink
-                    href={route('admin.notas.index')}
-                    active={route().current('admin.notas.*')}
-                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
-                >
-                    Notas / Exámenes
                 </NavLink>
 
                 {/* SISTEMA */}
@@ -104,6 +95,15 @@ export default function Sidebar({ user }) {
                     className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
                 >
                     Bitácora
+                </NavLink>
+
+                {/* ================= NUEVO ================= */}
+                <NavLink
+                    href={route('admin.desempeno.index')}
+                    active={route().current('admin.desempeno.*')}
+                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                >
+                    Desempeño Final
                 </NavLink>
 
             </nav>
