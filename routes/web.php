@@ -11,6 +11,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PostulanteController;
 use App\Http\Controllers\Admin\PostulanteController as AdminPostulanteController;
 use App\Http\Controllers\Admin\BitacoraController; // 🚀 1. Importamos el controlador
+use App\Http\Controllers\Admin\ReporteController;
 use Illuminate\Foundation\Application;
 
 
@@ -31,10 +32,11 @@ Route::post('/preinscripcion/validar-ia', [PostulanteController::class, 'validar
 Route::post('/preinscripcion/completar', [PostulanteController::class, 'storePublico'])->name('postulantes.store.publico');
 Route::get('/preinscripcion/comprobante/{id}', [PostulanteController::class, 'comprobante'])->name('postulantes.comprobante');
 
-// RUTAS PROTEGIDAS DEL DASHBOARD BÁSICO
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+use App\Http\Controllers\DashboardController;
+
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -224,10 +226,17 @@ Route::get('/desempeno/aprobados', [DesempenoFinalController::class, 'aprobados'
 Route::get('/desempeno/reprobados', [DesempenoFinalController::class, 'reprobados'])
     ->name('admin.desempeno.reprobados');
 
-    
-
-
-        
+    // =========================
+    // TABLERO DE REPORTES
+    // =========================
+    Route::get('/reportes', [ReporteController::class, 'index'])
+        ->name('admin.reportes.index');
+    Route::get('/reportes/datos', [ReporteController::class, 'obtenerReporte'])
+        ->name('admin.reportes.datos');
+    Route::get('/reportes/excel', [ReporteController::class, 'exportarExcel'])
+        ->name('admin.reportes.excel');
+    Route::get('/reportes/word', [ReporteController::class, 'exportarWord'])
+        ->name('admin.reportes.word');
 });
 
 

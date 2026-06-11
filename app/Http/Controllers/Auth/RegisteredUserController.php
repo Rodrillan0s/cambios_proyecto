@@ -43,17 +43,20 @@ class RegisteredUserController extends Controller
             ->select('id_rol', 'nombre')
             ->get();
 
-        $permisos = DB::table('cup.t_permisos as p')
-            ->join('cup.t_modulo as m', 'p.id_modulo', '=', 'm.id_modulo')
-            ->select('p.id_permiso', 'p.nombre_permiso', 'm.nombre as nombre_modulo')
-            ->orderBy('m.nombre')
-            ->orderBy('p.nombre_permiso')
-            ->get();
+        $rolPermisos = DB::table('cup.t_rol_permiso')
+            ->select('id_rol', 'id_permiso')
+            ->get()
+            ->groupBy('id_rol')
+            ->map(function ($items) {
+                return $items->pluck('id_permiso')->all();
+            })
+            ->all();
 
         return Inertia::render('Admin/Usuarios/Index', [
             'usuarios' => $usuarios,
             'roles' => $roles,
-            'permisos' => $permisos
+            'permisos' => $permisos,
+            'rolPermisos' => $rolPermisos
         ]);
     }
 

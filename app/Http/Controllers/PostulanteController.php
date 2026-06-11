@@ -253,6 +253,7 @@ class PostulanteController extends Controller
                 'r.fecha_bachiller',
                 'r.codigo_bachiller',
                 'r.modalidad',
+                'r.fecha_registro',
 
                 // 3. Comprobante de Pago
                 'pa.transaccion_id',
@@ -275,7 +276,7 @@ class PostulanteController extends Controller
 
         $codigoInscripcion = 'CUP-' . date('Y') . '-' . str_pad($postulante->id_postulante, 6, '0', STR_PAD_LEFT);
         $anioEgreso = date('Y', strtotime($postulante->fecha_bachiller));
-        $fechaEmision = now()->format('d / m / Y H:i:s');
+        $fechaEmision = $postulante->fecha_registro ? date('d / m / Y H:i:s', strtotime($postulante->fecha_registro)) : now()->format('d / m / Y H:i:s');
 
         return Inertia::render('Postulantes/Publico/Comprobante', [
             'postulante' => $postulante,

@@ -22,10 +22,22 @@ class User extends Authenticatable
         'password',
     ];
 
+    protected $appends = ['name', 'email'];
+
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
         ];
+    }
+
+    public function getNameAttribute()
+    {
+        return $this->nombre;
+    }
+
+    public function getEmailAttribute()
+    {
+        return $this->correo;
     }
 }
