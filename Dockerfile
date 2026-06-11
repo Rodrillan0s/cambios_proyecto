@@ -20,18 +20,24 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # =========================
-# EXTENSIONES PHP (IMPORTANTE PGSQL)
+# EXTENSIONES PHP (SEPARADAS PARA EVITAR FALLAS)
 # =========================
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-        pdo \
-        pdo_mysql \
-        pdo_pgsql \
-        mbstring \
-        zip \
-        exif \
-        pcntl \
-        gd
+
+# PostgreSQL (CRÍTICO)
+RUN docker-php-ext-install pdo_pgsql
+
+# Otras extensiones
+RUN docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    mbstring \
+    zip \
+    exif \
+    pcntl \
+    gd
+
+# GD config
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
 # =========================
 # NODEJS (VITE)
@@ -45,28 +51,28 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # =========================
-# COPIAR PROYECTO
+# PROYECTO
 # =========================
 COPY . .
 
 # =========================
-# DEPENDENCIAS BACKEND
+# BACKEND
 # =========================
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
 # =========================
-# LIMPIAR BUILD VIEJO (IMPORTANTE)
+# LIMPIAR BUILD VIEJO
 # =========================
 RUN rm -rf public/build
 
 # =========================
-# DEPENDENCIAS FRONTEND + BUILD
+# FRONTEND (VITE)
 # =========================
 RUN npm install --legacy-peer-deps
 RUN npm run build
 
 # =========================
-# PERMISOS LARAVEL
+# PERMISOS
 # =========================
 RUN chmod -R 777 storage bootstrap/cache
 
@@ -76,6 +82,6 @@ RUN chmod -R 777 storage bootstrap/cache
 EXPOSE 10000
 
 # =========================
-# START SERVER
+# START
 # =========================
 CMD php artisan serve --host=0.0.0.0 --port=10000
