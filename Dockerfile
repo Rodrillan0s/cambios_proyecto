@@ -2,56 +2,47 @@ FROM php:8.3-cli
 
 WORKDIR /var/www
 
-# =========================
-# DEPENDENCIAS DEL SISTEMA
-# =========================
+# ========================
+# DEPENDENCIAS PHP
+# ========================
 RUN apt-get update && apt-get install -y \
-    git \
-    unzip \
-    zip \
-    curl \
-    libzip-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libonig-dev \
-    libxml2-dev
+    git unzip zip curl \
+    libzip-dev libpng-dev libjpeg-dev libfreetype6-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl gd
 
-# =========================
-# EXTENSIONES PHP (IMPORTANTE)
-# =========================
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
-    pdo \
-    pdo_mysql \
-    mbstring \
-    zip \
-    exif \
-    pcntl \
-    gd
+# ========================
+# NODE + NPM (IMPORTANTE)
+# ========================
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
 
-# =========================
+# ========================
 # COMPOSER
-# =========================
+# ========================
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# =========================
-# COPY COMPOSER FIRST
-# =========================
-COPY composer.json composer.lock ./
+WORKDIR /var/www
 
-RUN composer install --no-interaction --prefer-dist --no-scripts
-
-# =========================
-# COPY FULL PROJECT
-# =========================
+# ========================
+# COPIAR PROYECTO
+# ========================
 COPY . .
 
-RUN composer dump-autoload --optimize
+# ========================
+# INSTALL BACKEND
+# ========================
+RUN composer install --no-interaction --prefer-dist
 
-# =========================
-# PERMISOS LARAVEL
-# =========================
+# ========================
+# INSTALL FRONTEND + BUILD VITE
+# ========================
+RUN npm install
+RUN npm run build
+
+# ========================
+# PERMISOS
+# ========================
 RUN chmod -R 777 storage bootstrap/cache
 
 EXPOSE 10000
