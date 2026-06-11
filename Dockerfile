@@ -1,4 +1,4 @@
-FROM php:8.2-cli
+FROM php:8.3-cli
 
 WORKDIR /var/www
 
@@ -12,9 +12,23 @@ RUN apt-get update && apt-get install -y \
     curl \
     libzip-dev \
     libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
     libonig-dev \
-    libxml2-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl
+    libxml2-dev
+
+# =========================
+# EXTENSIONES PHP (IMPORTANTE)
+# =========================
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    mbstring \
+    zip \
+    exif \
+    pcntl \
+    gd
 
 # =========================
 # COMPOSER
@@ -22,21 +36,17 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # =========================
-# COPIAR SOLO ARCHIVOS NECESARIOS PRIMERO
-# (esto evita errores de composer)
+# COPY COMPOSER FIRST
 # =========================
 COPY composer.json composer.lock ./
 
-RUN composer install --no-interaction --prefer-dist --no-scripts --no-autoloader
+RUN composer install --no-interaction --prefer-dist --no-scripts
 
 # =========================
-# COPIAR TODO EL PROYECTO
+# COPY FULL PROJECT
 # =========================
 COPY . .
 
-# =========================
-# FINALIZAR COMPOSER
-# =========================
 RUN composer dump-autoload --optimize
 
 # =========================
@@ -44,12 +54,6 @@ RUN composer dump-autoload --optimize
 # =========================
 RUN chmod -R 777 storage bootstrap/cache
 
-# =========================
-# PUERTO RENDER
-# =========================
 EXPOSE 10000
 
-# =========================
-# START SERVER
-# =========================
 CMD php artisan serve --host=0.0.0.0 --port=10000
