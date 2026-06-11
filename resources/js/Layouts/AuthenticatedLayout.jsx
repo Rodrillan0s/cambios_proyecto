@@ -1,7 +1,7 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import { usePage } from '@inertiajs/react';
-import Sidebar from '@/Components/Sidebar';
+import Sidebar from '@/Components/SideBar';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children, fluid = false }) {
