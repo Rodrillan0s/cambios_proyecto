@@ -15,8 +15,9 @@ export default function Dashboard({
     hoyFecha = "",
     gestiones = [],
     selectedGestion = "",
-    stats = { postulantes: 0, aprobados: 0, reprobados: 0, ingresos: 0 },
-    carrerasData = []
+    stats = { postulantes: 0, aprobados: 0, reprobados: 0, admitidos: 0, ingresos: 0 },
+    carrerasData = [],
+    academico = null
 }) {
     // --- ESTADOS PARA EL IMPORTADOR DE POSTULANTES ---
     const [showImporter, setShowImporter] = useState(false);
@@ -143,52 +144,64 @@ export default function Dashboard({
                             </div>
                         </div>
 
-                        {/* Tarjetas Estadísticas */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                            {/* Card 1 */}
-                            <div className="bg-gradient-to-br from-indigo-50/50 to-white p-5 rounded-2xl border border-indigo-100/60 shadow-sm flex items-center justify-between">
+                        {/* Tarjetas Estadísticas (Diferenciando Aprobados de Admitidos) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                            {/* Card 1: Registrados */}
+                            <div className="bg-gradient-to-br from-indigo-50/50 to-white p-4 rounded-2xl border border-indigo-100/60 shadow-sm flex items-center justify-between">
                                 <div>
-                                    <span className="text-[10px] font-black uppercase text-indigo-500 tracking-wider">Postulantes Registrados</span>
-                                    <h4 className="text-2xl font-black text-slate-800 mt-1">{stats.postulantes}</h4>
+                                    <span className="text-[9px] font-black uppercase text-indigo-500 tracking-wider">Postulantes Registrados</span>
+                                    <h4 className="text-xl font-black text-slate-800 mt-1">{stats.postulantes}</h4>
                                 </div>
-                                <div className="p-3 bg-indigo-500/10 text-indigo-600 rounded-xl">
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2 bg-indigo-500/10 text-indigo-600 rounded-xl shrink-0">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                     </svg>
                                 </div>
                             </div>
-                            {/* Card 2 */}
-                            <div className="bg-gradient-to-br from-emerald-50/50 to-white p-5 rounded-2xl border border-emerald-100/60 shadow-sm flex items-center justify-between">
+                            {/* Card 2: Aprobados (Nota >= 51) */}
+                            <div className="bg-gradient-to-br from-blue-50/50 to-white p-4 rounded-2xl border border-blue-100/60 shadow-sm flex items-center justify-between">
                                 <div>
-                                    <span className="text-[10px] font-black uppercase text-emerald-500 tracking-wider">Postulantes Admitidos</span>
-                                    <h4 className="text-2xl font-black text-slate-800 mt-1">{stats.aprobados}</h4>
+                                    <span className="text-[9px] font-black uppercase text-blue-500 tracking-wider">Aprobados (Nota ≥ 51)</span>
+                                    <h4 className="text-xl font-black text-slate-800 mt-1">{stats.aprobados}</h4>
                                 </div>
-                                <div className="p-3 bg-emerald-500/10 text-emerald-600 rounded-xl">
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2 bg-blue-500/10 text-blue-600 rounded-xl shrink-0">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                    </svg>
+                                </div>
+                            </div>
+                            {/* Card 3: Admitidos (t_admitidos) */}
+                            <div className="bg-gradient-to-br from-emerald-50/50 to-white p-4 rounded-2xl border border-emerald-100/60 shadow-sm flex items-center justify-between">
+                                <div>
+                                    <span className="text-[9px] font-black uppercase text-emerald-500 tracking-wider">Postulantes Admitidos</span>
+                                    <h4 className="text-xl font-black text-slate-800 mt-1">{stats.admitidos}</h4>
+                                </div>
+                                <div className="p-2 bg-emerald-500/10 text-emerald-600 rounded-xl shrink-0">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                             </div>
-                            {/* Card 3 */}
-                            <div className="bg-gradient-to-br from-rose-50/50 to-white p-5 rounded-2xl border border-rose-100/60 shadow-sm flex items-center justify-between">
+                            {/* Card 4: Reprobados */}
+                            <div className="bg-gradient-to-br from-rose-50/50 to-white p-4 rounded-2xl border border-rose-100/60 shadow-sm flex items-center justify-between">
                                 <div>
-                                    <span className="text-[10px] font-black uppercase text-rose-500 tracking-wider">Postulantes Reprobados</span>
-                                    <h4 className="text-2xl font-black text-slate-800 mt-1">{stats.reprobados}</h4>
+                                    <span className="text-[9px] font-black uppercase text-rose-500 tracking-wider">Postulantes Reprobados</span>
+                                    <h4 className="text-xl font-black text-slate-800 mt-1">{stats.reprobados}</h4>
                                 </div>
-                                <div className="p-3 bg-rose-500/10 text-rose-600 rounded-xl">
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2 bg-rose-500/10 text-rose-600 rounded-xl shrink-0">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
                             </div>
-                            {/* Card 4 */}
-                            <div className="bg-gradient-to-br from-amber-50/50 to-white p-5 rounded-2xl border border-amber-100/60 shadow-sm flex items-center justify-between">
+                            {/* Card 5: Ingresos */}
+                            <div className="bg-gradient-to-br from-amber-50/50 to-white p-4 rounded-2xl border border-amber-100/60 shadow-sm flex items-center justify-between">
                                 <div>
-                                    <span className="text-[10px] font-black uppercase text-amber-500 tracking-wider">Ingresos Recaudados</span>
-                                    <h4 className="text-2xl font-black text-slate-800 mt-1">{stats.ingresos.toLocaleString()} Bs.</h4>
+                                    <span className="text-[9px] font-black uppercase text-amber-500 tracking-wider">Ingresos Recaudados</span>
+                                    <h4 className="text-xl font-black text-slate-800 mt-1">{stats.ingresos.toLocaleString()} Bs.</h4>
                                 </div>
-                                <div className="p-3 bg-amber-500/10 text-amber-600 rounded-xl">
-                                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <div className="p-2 bg-amber-500/10 text-amber-600 rounded-xl shrink-0">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
@@ -240,7 +253,7 @@ export default function Dashboard({
                                     <div className="space-y-5">
                                         <div className="flex items-center justify-around gap-4">
                                             <div className="text-center">
-                                                <span className="block text-2xl font-black text-emerald-600">{porcAprobados}%</span>
+                                                <span className="block text-2xl font-black text-blue-600">{porcAprobados}%</span>
                                                 <span className="text-[10px] text-slate-400 font-bold uppercase">Tasa Aprobados</span>
                                             </div>
                                             <div className="text-center">
@@ -250,13 +263,14 @@ export default function Dashboard({
                                         </div>
 
                                         <div className="flex h-4 w-full rounded-full overflow-hidden">
-                                            <div className="h-full bg-emerald-500" style={{ width: `${porcAprobados}%` }} title={`Aprobados: ${porcAprobados}%`} />
+                                            <div className="h-full bg-indigo-500" style={{ width: `${porcAprobados}%` }} title={`Aprobados: ${porcAprobados}%`} />
                                             <div className="h-full bg-rose-500" style={{ width: `${porcReprobados}%` }} title={`Reprobados: ${porcReprobados}%`} />
                                         </div>
 
-                                        <div className="flex items-center justify-center gap-4 text-[10px] font-bold text-slate-500 uppercase">
-                                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" /> Admitidos ({stats.aprobados})</span>
-                                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-rose-50 rounded-full" /> Reprobados ({stats.reprobados})</span>
+                                        <div className="flex items-center justify-center flex-wrap gap-4 text-[10px] font-bold text-slate-500 uppercase">
+                                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-blue-500 rounded-full" /> Aprobados ({stats.aprobados})</span>
+                                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-emerald-500 rounded-full" /> Admitidos ({stats.admitidos})</span>
+                                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 bg-rose-500 rounded-full" /> Reprobados ({stats.reprobados})</span>
                                         </div>
                                     </div>
                                 )}
@@ -499,6 +513,29 @@ export default function Dashboard({
                             )}
                         </div>
 
+                        {/* Carreras Postuladas Card */}
+                        {academico && (
+                            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
+                                <h4 className="font-extrabold text-slate-800 text-sm border-b border-slate-100 pb-2">
+                                    Carreras Postuladas
+                                </h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <span className="text-[10px] text-slate-400 font-black uppercase block tracking-wider">Primera Opción</span>
+                                        <span className="text-sm font-black text-slate-850 block mt-1">
+                                            {academico.carrera_1_nombre || 'No registrada'}
+                                        </span>
+                                    </div>
+                                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                        <span className="text-[10px] text-slate-400 font-black uppercase block tracking-wider">Segunda Opción</span>
+                                        <span className="text-sm font-black text-slate-850 block mt-1">
+                                            {academico.carrera_2_nombre || 'No registrada'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Listado de Exámenes y Calificaciones */}
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             {/* Boleta de Notas */}
@@ -539,44 +576,66 @@ export default function Dashboard({
                                 </div>
                             </div>
 
-                            {/* Resumen Promedio */}
+                            {/* Resumen Promedio / Estado Admisión */}
                             <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm flex flex-col justify-between space-y-6">
                                 <div className="space-y-4">
                                     <h4 className="font-extrabold text-slate-800 text-sm">
-                                        Estado de Aprobación
+                                        Estado de Admisión
                                     </h4>
 
-                                    {examenes.length === 0 ? (
-                                        <p className="text-xs text-slate-400 italic">No es posible calcular promedios sin exámenes cargados.</p>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            <div className="text-center py-6 bg-slate-50 border border-slate-100 rounded-2xl">
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Promedio Acumulado</span>
-                                                <h3 className="text-4xl font-black text-slate-800 mt-1">
-                                                    {Math.round(examenes.reduce((acc, x) => acc + parseFloat(x.nota), 0) / examenes.length)} Pts.
-                                                </h3>
-                                            </div>
+                                    {(() => {
+                                        const admitido = academico && academico.id_carrera_admitido !== null;
+                                        const hasExams = examenes.length > 0;
+                                        const avg = hasExams ? Math.round(examenes.reduce((acc, x) => acc + parseFloat(x.nota), 0) / examenes.length) : 0;
+                                        const aprobado = avg >= 51;
 
-                                            {(() => {
-                                                const avg = examenes.reduce((acc, x) => acc + parseFloat(x.nota), 0) / examenes.length;
-                                                const aprobado = avg >= 51;
-                                                return (
-                                                    <div className={`p-4 border rounded-2xl text-center space-y-1.5 ${
-                                                        aprobado 
-                                                            ? "bg-emerald-50 border-emerald-100 text-emerald-800" 
-                                                            : "bg-rose-50 border-rose-100 text-rose-800"
-                                                    }`}>
-                                                        <span className="block text-xs font-black uppercase tracking-wider">{aprobado ? "ADMITIDO" : "NO HABILITADO"}</span>
-                                                        <p className="text-[9px] font-semibold text-slate-500 leading-normal">
-                                                            {aprobado 
-                                                                ? "¡Felicidades! Has superado la nota mínima de admisión (51 Pts.) para formar parte de la FICCT." 
-                                                                : "Tu nota acumulada actual es inferior a los 51 puntos mínimos exigidos para la admisión."}
+                                        return (
+                                            <div className="space-y-4">
+                                                {hasExams && (
+                                                    <div className="text-center py-6 bg-slate-50 border border-slate-100 rounded-2xl">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Promedio Final</span>
+                                                        <h3 className="text-4xl font-black text-slate-800 mt-1">
+                                                            {avg} Pts.
+                                                        </h3>
+                                                    </div>
+                                                )}
+
+                                                {admitido ? (
+                                                    <div className="p-4 bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-2xl text-center space-y-1.5 shadow-sm">
+                                                        <span className="block text-xs font-black uppercase tracking-wider">🎉 ADMITIDO OFICIALMENTE</span>
+                                                        <p className="text-[10px] font-bold text-slate-650 mt-1">Carrera Admitida:</p>
+                                                        <span className="block text-xs font-black text-emerald-700 bg-white border border-emerald-100 px-3 py-1.5 rounded-xl uppercase">
+                                                            {academico.carrera_admitida_nombre}
+                                                        </span>
+                                                        <p className="text-[9px] font-semibold text-slate-500 leading-normal mt-1">
+                                                            ¡Felicidades! Has sido admitido en la Facultad de Ciencias de la Computación y Telecomunicaciones (FICCT).
                                                         </p>
                                                     </div>
-                                                );
-                                            })()}
-                                        </div>
-                                    )}
+                                                ) : !hasExams ? (
+                                                    <div className="p-4 bg-slate-50 border border-slate-100 text-slate-500 rounded-2xl text-center space-y-1.5">
+                                                        <span className="block text-xs font-black uppercase tracking-wider text-slate-400">EN PROCESO</span>
+                                                        <p className="text-[9px] font-semibold leading-normal">
+                                                            Aún no se registran exámenes. Tu admisión se encuentra en proceso de revisión y cargado de notas.
+                                                        </p>
+                                                    </div>
+                                                ) : aprobado ? (
+                                                    <div className="p-4 bg-blue-50 border border-blue-100 text-blue-800 rounded-2xl text-center space-y-1.5 shadow-sm">
+                                                        <span className="block text-xs font-black uppercase tracking-wider">APROBADO (CUPOS EN PROCESO)</span>
+                                                        <p className="text-[9px] font-semibold text-slate-500 leading-normal">
+                                                            Has superado la nota mínima de 51 Pts. Tu admisión está en proceso de revisión de cupos y requisitos.
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-4 bg-rose-50 border border-rose-100 text-rose-800 rounded-2xl text-center space-y-1.5 shadow-sm">
+                                                        <span className="block text-xs font-black uppercase tracking-wider">NO HABILITADO</span>
+                                                        <p className="text-[9px] font-semibold text-slate-500 leading-normal">
+                                                            Tu promedio final es menor al puntaje mínimo de 51 Pts. exigido para la habilitación de admisión.
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 <div className="p-3.5 bg-indigo-50 border border-indigo-100 rounded-2xl text-[10px] font-semibold text-indigo-700 leading-normal">

@@ -169,7 +169,9 @@ class ReporteService
                 'd.apellidos',
                 DB::raw('COUNT(DISTINCT dp.id_postulante) as total_estudiantes'),
                 DB::raw('SUM(CASE WHEN dp.aprobado = true THEN 1 ELSE 0 END) as aprobados'),
-                DB::raw('ROUND(SUM(CASE WHEN dp.aprobado = true THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT dp.id_postulante), 2) as tasa_aprobacion')
+                DB::raw('SUM(CASE WHEN dp.resultado_final = \'ADMITIDO\' THEN 1 ELSE 0 END) as admitidos'),
+                DB::raw('ROUND(SUM(CASE WHEN dp.aprobado = true THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT dp.id_postulante), 2) as tasa_aprobacion'),
+                DB::raw('ROUND(SUM(CASE WHEN dp.resultado_final = \'ADMITIDO\' THEN 1 ELSE 0 END) * 100.0 / COUNT(DISTINCT dp.id_postulante), 2) as tasa_admision')
             );
 
         if ($gestion) {
@@ -178,7 +180,7 @@ class ReporteService
 
         return $query->groupBy('d.id_docente', 'd.ci', 'd.nombres', 'd.apellidos')
             ->havingRaw('COUNT(DISTINCT dp.id_postulante) > 0')
-            ->orderBy('tasa_aprobacion', 'desc')
+            ->orderBy('tasa_admision', 'desc')
             ->get();
     }
 
@@ -321,6 +323,33 @@ class ReporteService
     }
 
     /**
+     * 9b. Postulantes admitidos
+     */
+    public static function postulantesAdmitidos($gestion)
+    {
+        $query = DB::table('cup.v_desempeno_postulante')
+            ->select(
+                'id_postulante',
+                'ci',
+                'postulante',
+                'promedio_matematicas',
+                'promedio_fisica',
+                'promedio_computacion',
+                'promedio_ingles',
+                'promedio_final',
+                'nombre_grupo',
+                'carrera as carrera_admitido'
+            )
+            ->where('resultado_final', 'ADMITIDO');
+
+        if ($gestion) {
+            $query->where('gestion', $gestion);
+        }
+
+        return $query->orderBy('promedio_final', 'desc')->get();
+    }
+
+    /**
      * 10. Postulantes reprobados
      */
     public static function postulantesReprobados($gestion)
@@ -436,7 +465,9 @@ class ReporteService
                 'g.nombre as nombre_grupo',
                 DB::raw('COUNT(dp.id_postulante) as total_estudiantes'),
                 DB::raw('SUM(CASE WHEN dp.aprobado = true THEN 1 ELSE 0 END) as aprobados'),
-                DB::raw('ROUND(SUM(CASE WHEN dp.aprobado = true THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(dp.id_postulante), 0), 2) as tasa_aprobados')
+                DB::raw('SUM(CASE WHEN dp.resultado_final = \'ADMITIDO\' THEN 1 ELSE 0 END) as admitidos'),
+                DB::raw('ROUND(SUM(CASE WHEN dp.aprobado = true THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(dp.id_postulante), 0), 2) as tasa_aprobados'),
+                DB::raw('ROUND(SUM(CASE WHEN dp.resultado_final = \'ADMITIDO\' THEN 1 ELSE 0 END) * 100.0 / NULLIF(COUNT(dp.id_postulante), 0), 2) as tasa_admitidos')
             );
 
         if ($gestion) {
@@ -444,7 +475,7 @@ class ReporteService
         }
 
         return $query->groupBy('g.id_grupo', 'g.nombre')
-            ->orderBy('aprobados', 'desc')
+            ->orderBy('admitidos', 'desc')
             ->get();
     }
 }

@@ -192,6 +192,8 @@ class ReporteController extends Controller
                 return ReporteService::listaGeneralPostulantes($gestion);
             case 'postulantes-aprobados':
                 return ReporteService::postulantesAprobados($gestion);
+            case 'postulantes-admitidos':
+                return ReporteService::postulantesAdmitidos($gestion);
             case 'postulantes-reprobados':
                 return ReporteService::postulantesReprobados($gestion);
             case 'promedios-generales':
@@ -224,7 +226,7 @@ class ReporteController extends Controller
             case 'ingresos-carrera':
                 return ['Carrera', 'Total Pagos', 'Monto Total Ingresos (Bs.)'];
             case 'docentes-aprobados':
-                return ['CI', 'Nombres', 'Apellidos', 'Total Estudiantes Asignados', 'Total Aprobados', 'Porcentaje Tasa Aprobación %'];
+                return ['CI', 'Nombres', 'Apellidos', 'Total Estudiantes Asignados', 'Total Aprobados', 'Total Admitidos', 'Porcentaje Tasa Aprobación %', 'Porcentaje Tasa Admisión %'];
             case 'materia-reprobados':
             case 'estadisticas-materia':
                 return ['Materia', 'Total Alumnos', 'Total Reprobados', 'Tasa Reprobación %', 'Promedio Nota'];
@@ -234,6 +236,8 @@ class ReporteController extends Controller
                 return ['CI', 'Nombres', 'Apellidos', 'Correo Electrónico', 'Teléfono', 'Fecha Registro', 'Carrera Opción 1', 'Carrera Opción 2', 'Monto Pago', 'Estado Pago'];
             case 'postulantes-aprobados':
                 return ['CI', 'Postulante (Nombre Completo)', 'Matemáticas', 'Física', 'Computación', 'Inglés', 'Promedio Final', 'Grupo Asignado', 'Carrera de Admisión'];
+            case 'postulantes-admitidos':
+                return ['CI', 'Postulante (Nombre Completo)', 'Matemáticas', 'Física', 'Computación', 'Inglés', 'Promedio Final', 'Grupo Asignado', 'Carrera Admitida'];
             case 'postulantes-reprobados':
                 return ['CI', 'Postulante (Nombre Completo)', 'Matemáticas', 'Física', 'Computación', 'Inglés', 'Promedio Final', 'Grupo Asignado'];
             case 'promedios-generales':
@@ -243,7 +247,7 @@ class ReporteController extends Controller
             case 'docentes-grupo':
                 return ['Nombre Grupo', 'Gestión', 'CI Docente', 'Docente Asignado', 'Materia Impartida'];
             case 'grupos-aprobados':
-                return ['ID Grupo', 'Nombre Grupo', 'Total Alumnos', 'Alumnos Aprobados', 'Tasa Aprobación %'];
+                return ['ID Grupo', 'Nombre Grupo', 'Total Alumnos', 'Alumnos Aprobados', 'Alumnos Admitidos', 'Tasa Aprobación %', 'Tasa Admisión %'];
             default:
                 return ['Datos'];
         }

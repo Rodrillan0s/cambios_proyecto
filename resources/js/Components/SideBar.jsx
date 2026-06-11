@@ -111,6 +111,14 @@ export default function Sidebar({ user, onClose }) {
                         >
                             Licencias Docente
                         </NavLink>
+
+                        <NavLink
+                            href={route('admin.notas.index')}
+                            active={route().current('admin.notas.*')}
+                            className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                        >
+                            Control de Notas
+                        </NavLink>
                     </>
                 )}
 

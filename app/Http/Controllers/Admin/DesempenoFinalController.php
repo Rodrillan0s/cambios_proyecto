@@ -60,6 +60,8 @@ class DesempenoFinalController extends Controller
     {
         DesempenoFinalService::generar();
 
+        \App\Services\BitacoraService::registrar('ADMISIÓN', 'GENERAR RESULTADOS', "Generar lista de admitidos y resultados de admisión");
+
         return response()->json([
             'ok' => true,
             'message' => 'Resultados generados correctamente'

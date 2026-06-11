@@ -7,12 +7,13 @@ export default function Reportes({ gestiones = [] }) {
     const reportesList = [
         { id: "general-postulantes", label: "Lista General de Postulantes", icon: "", category: "Postulantes", desc: "Lista de postulantes registrados con sus datos de contacto y estado de pago." },
         { id: "postulantes-aprobados", label: "Postulantes Aprobados", icon: "", category: "Postulantes", desc: "Postulantes que superaron el examen de admisión con promedio final de aprobación." },
+        { id: "postulantes-admitidos", label: "Postulantes Admitidos", icon: "", category: "Postulantes", desc: "Postulantes oficialmente admitidos en base al cupo y promedio final." },
         { id: "postulantes-reprobados", label: "Postulantes Reprobados", icon: "", category: "Postulantes", desc: "Postulantes con notas acumuladas insuficientes para la admisión." },
         { id: "promedios-generales", label: "Promedios Generales", icon: "", category: "Postulantes", desc: "Promedio general obtenido por materia evaluada en la gestión actual." },
         { id: "postulantes-concurrentes", label: "Postulantes Concurrentes", icon: "", category: "Postulantes", desc: "Postulantes históricos con múltiples intentos de admisión en el sistema." },
 
         { id: "grupos-habilitados", label: "Cantidad de Grupos Habilitados", icon: "", category: "Grupos", desc: "Listado de grupos activos con turnos, capacidades e inscritos." },
-        { id: "grupos-aprobados", label: "Grupos con más Aprobados", icon: "", category: "Grupos", desc: "Grupos de estudiantes ordenados por cantidad de alumnos admitidos." },
+        { id: "grupos-aprobados", label: "Grupos con más Admitidos", icon: "", category: "Grupos", desc: "Grupos de estudiantes ordenados por cantidad de alumnos admitidos." },
 
         { id: "docentes-grupo", label: "Docentes por Grupos", icon: "", category: "Docentes", desc: "Asignación detallada de docentes y materias por grupos." },
         { id: "docentes-faltas", label: "Docentes con más Faltas", icon: "", category: "Docentes", desc: "Docentes ordenados por inasistencias en clases programadas." },
@@ -207,6 +208,8 @@ export default function Reportes({ gestiones = [] }) {
                 match = "postulantes-concurrentes";
             } else if (text.includes("lista general") || text.includes("general postulantes") || text.includes("lista de postulantes")) {
                 match = "general-postulantes";
+            } else if (text.includes("postulantes admitidos") || text.includes("estudiantes admitidos") || text.includes("reporte de admitidos") || text.includes("admitidos")) {
+                match = "postulantes-admitidos";
             } else if (text.includes("postulantes aprobados") || text.includes("estudiantes aprobados") || text.includes("reporte de aprobados") || text.includes("aprobados")) {
                 match = "postulantes-aprobados";
             } else if (text.includes("postulantes reprobados") || text.includes("estudiantes reprobados") || text.includes("reporte de reprobados") || text.includes("reprobados")) {
@@ -256,8 +259,11 @@ export default function Reportes({ gestiones = [] }) {
         carrera_admitido: "Carrera Admitida",
         total_estudiantes: "Alumnos Inscritos",
         aprobados: "Aprobados",
+        admitidos: "Admitidos",
         tasa_aprobacion: "Tasa Aprobación %",
+        tasa_admision: "Tasa Admisión %",
         tasa_aprobados: "Tasa Aprobación %",
+        tasa_admitidos: "Tasa Admisión %",
         materia: "Materia",
         total_alumnos: "Alumnos Evaluados",
         tasa_reprobados: "Tasa Reprobación %",
@@ -325,10 +331,10 @@ export default function Reportes({ gestiones = [] }) {
                     { label: "Carrera Mayor Demanda", value: carreraTop, color: "text-amber-600 bg-amber-50" }
                 ];
             case "docentes-aprobados":
-                const maxTasa = count > 0 ? `${reportData[0].tasa_aprobacion}%` : "-";
+                const maxTasaAdm = count > 0 ? `${reportData[0].tasa_admision}%` : "-";
                 return [
                     { label: "Docentes Analizados", value: count, color: "text-slate-600 bg-slate-50" },
-                    { label: "Mayor Tasa Aprobados", value: maxTasa, color: "text-emerald-600 bg-emerald-50" }
+                    { label: "Mayor Tasa Admisión", value: maxTasaAdm, color: "text-emerald-600 bg-emerald-50" }
                 ];
             case "materia-reprobados":
             case "estadisticas-materia":
@@ -358,6 +364,12 @@ export default function Reportes({ gestiones = [] }) {
                     { label: "Total Aprobados", value: count, color: "text-emerald-600 bg-emerald-50" },
                     { label: "Nota Más Alta", value: `${notaMasAlta} Pts.`, color: "text-amber-600 bg-amber-50" }
                 ];
+            case "postulantes-admitidos":
+                const notaMasAltaAdm = count > 0 ? floatVal(reportData[0].promedio_final) : 0;
+                return [
+                    { label: "Total Admitidos", value: count, color: "text-emerald-600 bg-emerald-50" },
+                    { label: "Nota Más Alta", value: `${notaMasAltaAdm} Pts.`, color: "text-amber-600 bg-amber-50" }
+                ];
             case "postulantes-reprobados":
                 return [
                     { label: "Total Reprobados", value: count, color: "text-rose-600 bg-rose-50" }
@@ -378,11 +390,11 @@ export default function Reportes({ gestiones = [] }) {
                 ];
             case "grupos-aprobados":
                 const topGrupo = reportData.length > 0 ? reportData[0].nombre_grupo : "-";
-                const maxAprobadosGrupo = reportData.length > 0 ? reportData[0].aprobados : 0;
+                const maxAdmitidosGrupo = reportData.length > 0 ? reportData[0].admitidos : 0;
                 return [
                     { label: "Grupos Evaluados", value: count, color: "text-slate-600 bg-slate-50" },
                     { label: "Grupo con Más Admitidos", value: topGrupo, color: "text-emerald-600 bg-emerald-50" },
-                    { label: "Admitidos del Grupo", value: maxAprobadosGrupo, color: "text-amber-600 bg-amber-50" }
+                    { label: "Admitidos del Grupo", value: maxAdmitidosGrupo, color: "text-amber-600 bg-amber-50" }
                 ];
             default:
                 return [{ label: "Registros en Consulta", value: count, color: "text-slate-600 bg-slate-50" }];
@@ -419,6 +431,7 @@ export default function Reportes({ gestiones = [] }) {
 
     return (
         <AuthenticatedLayout
+            fluid={true}
             header={
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between w-full gap-4 no-print">
                     <div>

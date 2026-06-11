@@ -52,6 +52,11 @@ class RegisteredUserController extends Controller
             })
             ->all();
 
+        $permisos = DB::table('cup.t_permisos as p')
+            ->join('cup.t_modulo as m', 'p.id_modulo', '=', 'm.id_modulo')
+            ->select('p.id_permiso', 'p.nombre_permiso', 'm.nombre as nombre_modulo')
+            ->get();
+
         return Inertia::render('Admin/Usuarios/Index', [
             'usuarios' => $usuarios,
             'roles' => $roles,

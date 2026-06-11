@@ -51,6 +51,8 @@ class NotaController extends Controller
         try {
             NotaService::registrar($request->all());
 
+            \App\Services\BitacoraService::registrar('NOTAS', 'REGISTRAR NOTA', "Nota registrada para CI: {$request->ci}, Examen: {$request->nro_examen}, Materia ID: {$request->id_materia}, Nota: {$request->nota}");
+
             return response()->json(['ok' => true]);
 
         } catch (\Exception $e) {
@@ -66,9 +68,9 @@ class NotaController extends Controller
     // =========================
     public function update(Request $request, $id)
     {
-        return response()->json(
-            NotaService::actualizar($id, $request->all())
-        );
+        $res = NotaService::actualizar($id, $request->all());
+        \App\Services\BitacoraService::registrar('NOTAS', 'MODIFICAR NOTA', "Nota modificada ID: {$id}, Nueva Nota: " . ($request->nota ?? '-'));
+        return response()->json($res);
     }
 
     // =========================
@@ -76,9 +78,9 @@ class NotaController extends Controller
     // =========================
     public function destroy($id)
     {
-        return response()->json(
-            NotaService::eliminar($id)
-        );
+        $res = NotaService::eliminar($id);
+        \App\Services\BitacoraService::registrar('NOTAS', 'ELIMINAR NOTA', "Nota eliminada ID: {$id}");
+        return response()->json($res);
     }
 
     // =========================
@@ -91,6 +93,8 @@ class NotaController extends Controller
         ]);
 
         NotaService::importarExcel($request->file('file'));
+
+        \App\Services\BitacoraService::registrar('NOTAS', 'IMPORTAR NOTAS EXCEL', "Importación masiva de notas desde archivo Excel");
 
         return response()->json([
             'ok' => true,

@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/react';
 import Sidebar from '@/Components/Sidebar';
 import { useState } from 'react';
 
-export default function AuthenticatedLayout({ header, children }) {
+export default function AuthenticatedLayout({ header, children, fluid = false }) {
     const user = usePage().props.auth.user;
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -68,7 +68,7 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 {/* CONTENT */}
                 <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
-                    <div className="max-w-7xl mx-auto">
+                    <div className={fluid ? "w-full" : "max-w-7xl mx-auto"}>
                         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
                             {children}
                         </div>

@@ -35,6 +35,22 @@ class DashboardController extends Controller
             }
 
             if ($postulante) {
+                // Obtener datos académicos y de admisión de este postulante
+                $detallesAcademicos = DB::table('cup.t_requisitos_postulante as r')
+                    ->leftJoin('cup.t_carrera as c1', 'r.id_carrera_1', '=', 'c1.id_carrera')
+                    ->leftJoin('cup.t_carrera as c2', 'r.id_carrera_2', '=', 'c2.id_carrera')
+                    ->leftJoin('cup.t_admitidos as a', 'r.id_postulante', '=', 'a.id_postulante')
+                    ->leftJoin('cup.t_carrera as ca', 'a.id_carrera_admitido', '=', 'ca.id_carrera')
+                    ->where('r.id_postulante', $postulante->id_postulante)
+                    ->select(
+                        'c1.nombre as carrera_1_nombre',
+                        'c2.nombre as carrera_2_nombre',
+                        'a.id_carrera_admitido',
+                        'ca.nombre as carrera_admitida_nombre',
+                        'a.promedio_final as promedio_admitido'
+                    )
+                    ->first();
+
                 // Obtener exámenes y calificaciones de este postulante
                 $examenes = DB::table('cup.t_examen as e')
                     ->join('cup.t_materia as m', 'e.id_materia', '=', 'm.id_materia')
@@ -46,8 +62,10 @@ class DashboardController extends Controller
                 
                 $data['postulante'] = $postulante;
                 $data['examenes'] = $examenes;
+                $data['academico'] = $detallesAcademicos;
             } else {
                 $data['examenes'] = [];
+                $data['academico'] = null;
             }
         }
         
@@ -142,19 +160,21 @@ class DashboardController extends Controller
                     ->where('fecha_registro', '<', $end)
                     ->count();
 
-                // Cantidad de aprobados/reprobados en base al promedio final
+                // Cantidad de aprobados/reprobados/admitidos en base al promedio final
                 $desempeno = DB::table('cup.v_desempeno_postulante')
                     ->where('gestion', $selectedGestion)
                     ->select(
                         DB::raw('COUNT(*) as total'),
                         DB::raw('SUM(CASE WHEN aprobado = true THEN 1 ELSE 0 END) as aprobados'),
-                        DB::raw('SUM(CASE WHEN aprobado = false THEN 1 ELSE 0 END) as reprobados')
+                        DB::raw('SUM(CASE WHEN aprobado = false OR aprobado IS NULL THEN 1 ELSE 0 END) as reprobados'),
+                        DB::raw("SUM(CASE WHEN resultado_final = 'ADMITIDO' THEN 1 ELSE 0 END) as admitidos")
                     )
                     ->first();
 
                 if ($desempeno) {
                     $aprobadosCount = $desempeno->aprobados ?? 0;
                     $reprobadosCount = $desempeno->reprobados ?? 0;
+                    $admitidosCount = $desempeno->admitidos ?? 0;
                 }
 
                 // Total ingresos recaudados en este periodo
@@ -185,6 +205,7 @@ class DashboardController extends Controller
                 'postulantes' => $postulantesCount,
                 'aprobados' => $aprobadosCount,
                 'reprobados' => $reprobadosCount,
+                'admitidos' => $admitidosCount ?? 0,
                 'ingresos' => floatval($ingresosTotal)
             ];
             $data['carrerasData'] = $carrerasData;

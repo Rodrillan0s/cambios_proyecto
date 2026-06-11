@@ -28,6 +28,19 @@ class DesempenoFinalService
     }
 
     // =========================
+    // SOLO REPROBADOS
+    // =========================
+    public static function reprobados()
+    {
+        return DB::table('cup.v_desempeno_postulante')
+            ->where(function ($q) {
+                $q->where('aprobado', false)->orWhereNull('aprobado');
+            })
+            ->orderByDesc('promedio_final')
+            ->get();
+    }
+
+    // =========================
     // EJECUTAR PROCEDIMIENTO
     // =========================
     public static function generar()
