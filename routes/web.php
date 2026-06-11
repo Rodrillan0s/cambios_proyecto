@@ -131,6 +131,9 @@ Route::get('/docentes', function () {
 })->name('admin.docentes.index');
 
 Route::get('/docentes/data', [DocenteController::class, 'data']);
+Route::post('/docentes', [DocenteController::class, 'store']);
+Route::put('/docentes/{id}', [DocenteController::class, 'update']);
+Route::delete('/docentes/{id}', [DocenteController::class, 'destroy']);
 
 Route::post('/docentes/asignar', [DocenteController::class, 'asignarMateria']);
 

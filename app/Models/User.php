@@ -15,7 +15,7 @@ class User extends Authenticatable
     public $timestamps = false;             // Si no tienes created_at/updated_at en t_usuario
 
     protected $fillable = [
-        'usuario', 'password', 'nombre', 'correo', 'estado', 'id_rol',
+        'usuario', 'password', 'nombre', 'correo', 'estado', 'id_rol', 'cambiar_password',
     ];
 
     protected $hidden = [

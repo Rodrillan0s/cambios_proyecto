@@ -16,12 +16,14 @@ class GrupoService
         return true;
     }
 
-public static function obtenerResumen(string $gestion)
-{
-    return DB::table('cup.t_grupo')
-        ->orderBy('id_grupo')
-        ->get();
-}
+    public static function obtenerResumen(string $gestion)
+    {
+        return DB::table('cup.v_grupo_base')
+            ->where('gestion', $gestion)
+            ->select('id_grupo', 'nombre_grupo as nombre', 'gestion', 'turno', 'cantidad_estudiantes')
+            ->orderBy('id_grupo')
+            ->get();
+    }
 
     public static function obtenerEstudiantesGrupo(int $idGrupo)
     {

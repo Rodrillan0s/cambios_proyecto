@@ -41,6 +41,13 @@ class DocenteController extends Controller
         );
     }
 
+    public function destroy($id)
+    {
+        return response()->json(
+            DocenteService::eliminar($id)
+        );
+    }
+
     public function asignarMateria(Request $request)
     {
         return response()->json(
