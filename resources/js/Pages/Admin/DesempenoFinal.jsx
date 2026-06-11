@@ -15,8 +15,8 @@ export default function DesempenoFinal() {
     // filtros
     const [filtroEstado, setFiltroEstado] = useState("todos"); // todos | aprobados | reprobados
     const [filtroGrupo, setFiltroGrupo] = useState("todos");
-
-
+    const [filtroAdmitidos, setFiltroAdmitidos] = useState("todos");
+    const [FiltroGestion, setFiltroGestion] = useState("todos");
    const exportarPDF = () => {
     const doc = new jsPDF();
 
@@ -137,10 +137,44 @@ export default function DesempenoFinal() {
         return ["todos", ...Array.from(unique)];
     }, [data]);
 
+        const gestion = useMemo(() => {
+        const unique = new Set();
+        data.forEach(d => {
+            if (d.gestion) unique.add(d.gestion);
+        });
+        return ["todos", ...Array.from(unique)];
+    }, [data]);
+
+    const admitidosPorCarrera = useMemo(() => {
+    const map = {};
+
+    data.forEach(d => {
+        if ((d.resultado_final || "").toUpperCase() === "ADMITIDO") {
+            const carrera = d.carrera || "SIN CARRERA";
+
+            if (!map[carrera]) {
+                map[carrera] = 0;
+            }
+
+            map[carrera]++;
+        }
+    });
+
+    return map;
+}, [data]);
+    
+    const resultado_final= useMemo(() => {
+        const unique = new Set(); 
+        data.forEach(d => {
+            if (d.resultado_final) unique.add(d.resultado_final);
+        });
+        return ["todos", ...Array.from(unique)];
+    }, [data]);
+
     // =========================
     // FILTRO PRINCIPAL
     // =========================
-
+    
     
     const dataFiltrada = useMemo(() => {
 
@@ -159,10 +193,27 @@ export default function DesempenoFinal() {
         if (filtroGrupo !== "todos") {
             result = result.filter(d => d.nombre_grupo === filtroGrupo);
         }
-
+        
+        if (filtroAdmitidos === "NO ADMITIDO") {
+            result = result.filter(d => d.resultado_final === "NO ADMITIDO");
+        }
+      if (filtroAdmitidos !== "todos") {
+    result = result.filter(d =>
+        (d.resultado_final || "")
+            .toString()
+            .trim()
+            .toUpperCase() === filtroAdmitidos
+            
+    );
+    
+    
+}
+        if (FiltroGestion !== "todos") {
+            result = result.filter(d => d.gestion === FiltroGestion);
+        }   
         return result;
 
-    }, [data, filtroEstado, filtroGrupo]);
+    }, [data, filtroEstado, filtroGrupo, filtroAdmitidos, FiltroGestion]);
 
     // =========================
     // KPIs
@@ -224,7 +275,18 @@ export default function DesempenoFinal() {
                     </div>
 
                 </div>
+{/* ================= ADMITIDOS POR CARRERA ================= */}
+<div className="grid md:grid-cols-4 gap-3">
 
+    {Object.entries(admitidosPorCarrera).map(([carrera, cantidad], i) => (
+        <div key={i} className="bg-white border rounded p-4 shadow-sm">
+            <p className="text-sm text-gray-500">Admitidos</p>
+            <p className="font-bold text-blue-700">{carrera}</p>
+            <p className="text-xl font-bold">{cantidad}</p>
+        </div>
+    ))}
+
+</div>
                 {/* ================= ACCIONES ================= */}
                 <div className="flex flex-wrap gap-2 items-center">
 
@@ -273,6 +335,33 @@ export default function DesempenoFinal() {
                             </option>
                         ))}
                     </select>
+
+                         {/* filtro grupo */}
+                  <select
+    value={filtroAdmitidos}
+    onChange={(e) => setFiltroAdmitidos(e.target.value)}
+    className="border px-2 py-2 rounded"
+>
+    <option value="todos">Todos</option>
+    <option value="ADMITIDO">Admitido</option>
+    <option value="NO ADMITIDO">No admitido</option>
+
+</select>
+  <select
+    value={FiltroGestion}
+    onChange={(e) => setFiltroGestion(e.target.value)}
+    className="border px-2 py-2 rounded"
+    
+    
+>   
+       {gestion.map((g, i) => (
+                            <option key={i} value={g}>
+                                {g === "todos" ? "Todos las gestiones" : g}
+                            </option>
+                        ))}
+</select>
+
+
 
                 </div>
 
