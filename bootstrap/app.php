@@ -22,6 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'permiso' => \App\Http\Middleware\EnsureUserHasPermission::class,
         ]);
+
+        // 3. Confiar en todos los proxies para resolver HTTPS detrás del balanceador de carga de Render
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
