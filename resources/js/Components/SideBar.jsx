@@ -60,13 +60,37 @@ export default function Sidebar({ user }) {
                     Horarios
                 </NavLink>
 
-                {/* 👉 NUEVO: DOCENTES */}
                 <NavLink
                     href={route('admin.docentes.index')}
                     active={route().current('admin.docentes.*')}
                     className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
                 >
                     Docentes
+                </NavLink>
+
+                <NavLink
+                    href={route('admin.asistencias.index')}
+                    active={route().current('admin.asistencias.*')}
+                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                >
+                    Control de Asistencia
+                </NavLink>
+
+                {/* ================= NUEVO ================= */}
+                <NavLink
+                    href={route('admin.licencias.index')}
+                    active={route().current('admin.licencias.*')}
+                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                >
+                    Licencias Docente
+                </NavLink>
+
+                <NavLink
+                    href={route('admin.notas.index')}
+                    active={route().current('admin.notas.*')}
+                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                >
+                    Notas / Exámenes
                 </NavLink>
 
                 {/* SISTEMA */}

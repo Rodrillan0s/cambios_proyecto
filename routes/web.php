@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\NotaController;
+use App\Http\Controllers\Admin\LicenciaDocenteController;
+use App\Http\Controllers\Admin\ControlAsistenciaController;
 use App\Http\Controllers\Admin\DocenteController;
 use App\Http\Controllers\Admin\GrupoController;
 use App\Http\Controllers\Admin\HorarioController;
@@ -123,15 +126,79 @@ Route::get(
 )->name('admin.horarios.bloques.disponibles');
 
  
-  Route::get('/docentes', function () {
+Route::get('/docentes', function () {
     return Inertia::render('Admin/GestionarDocentes');
-});
+})->name('admin.docentes.index');
 
 Route::get('/docentes/data', [DocenteController::class, 'data']);
 
 Route::post('/docentes/asignar', [DocenteController::class, 'asignarMateria']);
 
 Route::delete('/docentes/quitar', [DocenteController::class, 'quitarMateria']);
+
+
+
+
+Route::get('/asistencias', [ControlAsistenciaController::class, 'index'])
+    ->name('admin.asistencias.index');
+
+Route::get('/asistencias/data', [ControlAsistenciaController::class, 'data'])
+    ->name('admin.asistencias.data');
+
+Route::post('/asistencias', [ControlAsistenciaController::class, 'store'])
+    ->name('admin.asistencias.store');
+       
+
+
+Route::get('/licencias-docente', [LicenciaDocenteController::class, 'index'])
+    ->name('admin.licencias.index');
+
+Route::get('/licencias-docente/data', [LicenciaDocenteController::class, 'data'])
+    ->name('admin.licencias.data');
+
+Route::get('/licencias-docente/docentes', [LicenciaDocenteController::class, 'docentes'])
+    ->name('admin.licencias.docentes');
+
+Route::post('/licencias-docente', [LicenciaDocenteController::class, 'store'])
+    ->name('admin.licencias.store');
+
+Route::delete('/licencias-docente/{id}', [LicenciaDocenteController::class, 'destroy'])
+    ->name('admin.licencias.destroy');
+
+    // =========================
+    // VISTA (INERTIA)
+    // =========================
+    Route::get('/notas', [NotaController::class, 'index'])
+        ->name('admin.notas.index');
+
+    // =========================
+    // DATA (API)
+    // =========================
+    Route::get('/notas/data', [NotaController::class, 'data'])
+        ->name('admin.notas.data');
+
+    // =========================
+    // MATERIAS (API)
+    // =========================
+    Route::get('/notas/materias', [NotaController::class, 'materias'])
+        ->name('admin.notas.materias');
+
+    // =========================
+    // CRUD NOTAS
+    // =========================
+    Route::post('/notas', [NotaController::class, 'store'])
+        ->name('admin.notas.store');
+
+    Route::put('/notas/{id}', [NotaController::class, 'update'])
+        ->name('admin.notas.update');
+
+    Route::delete('/notas/{id}', [NotaController::class, 'destroy'])
+        ->name('admin.notas.destroy');
+
+    Route::post('/notas/importar', [NotaController::class, 'importar'])
+    ->name('admin.notas.importar');    
+
+    
 });
 
 

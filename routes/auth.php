@@ -17,8 +17,7 @@ use Inertia\Inertia;
 // VISITANTES (Solo Login y Recuperación de Contraseña)
 // =====================================================================
 Route::middleware('guest')->group(function () {
-    // ⚠️ ATENCIÓN: Se eliminaron las rutas GET/POST de 'register' para cerrar la brecha de seguridad.
-
+ 
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
