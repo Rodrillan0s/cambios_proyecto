@@ -16,7 +16,13 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libonig-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    libonig5 \
+    && rm -rf /var/lib/apt/lists/*
+
+# =========================
+# EXTENSIONES PHP
+# =========================
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         pdo \
         pdo_mysql \
@@ -27,7 +33,7 @@ RUN apt-get update && apt-get install -y \
         gd
 
 # =========================
-# NODEJS (PARA VITE)
+# NODEJS (VITE)
 # =========================
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs
@@ -38,32 +44,27 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # =========================
-# COPIAR PROYECTO
+# PROYECTO
 # =========================
+WORKDIR /var/www
 COPY . .
 
 # =========================
-# BACKEND LARAVEL
+# BACKEND
 # =========================
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
 # =========================
-# FRONTEND VITE
+# FRONTEND (VITE)
 # =========================
 RUN npm install --legacy-peer-deps
 RUN npm run build
 
 # =========================
-# PERMISOS LARAVEL
+# PERMISOS
 # =========================
 RUN chmod -R 777 storage bootstrap/cache
 
-# =========================
-# PUERTO RENDER
-# =========================
 EXPOSE 10000
 
-# =========================
-# START SERVER
-# =========================
 CMD php artisan serve --host=0.0.0.0 --port=10000
