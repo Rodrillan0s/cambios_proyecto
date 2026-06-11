@@ -1,11 +1,12 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import { usePage } from '@inertiajs/react';
-import Sidebar from '@/Components/Sidebar';
+import SideBar from '@/Components/SideBar';
 import { useState } from 'react';
 
+//authenticated layout with sidebar and topbar, using tailwindcss for styling
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const user = usePage().props.auth.user;s
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     return (
@@ -22,7 +23,7 @@ export default function AuthenticatedLayout({ header, children }) {
             <div className={`fixed inset-y-0 left-0 z-50 lg:relative lg:translate-x-0 transition-transform duration-300 transform shrink-0 ${
                 sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             }`}>
-                <Sidebar user={user} onClose={() => setSidebarOpen(false)} />
+                <SideBar user={user} onClose={() => setSidebarOpen(false)} />
             </div>
 
             {/* MAIN AREA */}
