@@ -106,6 +106,14 @@ export default function Sidebar({ user }) {
                     Desempeño Final
                 </NavLink>
 
+                <NavLink
+                    href={route('usuarios.index')}
+                    active={route().current('usuarios.*')}
+                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                >
+                    Usuarios
+                </NavLink>
+
             </nav>
 
             {/* ================= USER ================= */}

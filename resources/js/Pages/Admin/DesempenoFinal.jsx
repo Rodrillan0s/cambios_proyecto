@@ -145,23 +145,6 @@ export default function DesempenoFinal() {
         return ["todos", ...Array.from(unique)];
     }, [data]);
 
-    const admitidosPorCarrera = useMemo(() => {
-    const map = {};
-
-    data.forEach(d => {
-        if ((d.resultado_final || "").toUpperCase() === "ADMITIDO") {
-            const carrera = d.carrera || "SIN CARRERA";
-
-            if (!map[carrera]) {
-                map[carrera] = 0;
-            }
-
-            map[carrera]++;
-        }
-    });
-
-    return map;
-}, [data]);
     
     const resultado_final= useMemo(() => {
         const unique = new Set(); 
@@ -215,6 +198,23 @@ export default function DesempenoFinal() {
 
     }, [data, filtroEstado, filtroGrupo, filtroAdmitidos, FiltroGestion]);
 
+    const admitidosPorCarrera = useMemo(() => {
+    const map = {};
+
+    dataFiltrada.forEach(d => {
+        if ((d.resultado_final || "").toUpperCase() === "ADMITIDO") {
+            const carrera = d.carrera || "SIN CARRERA";
+
+            if (!map[carrera]) {
+                map[carrera] = 0;
+            }
+
+            map[carrera]++;
+        }
+    });
+
+    return map;
+}, [dataFiltrada]);
     // =========================
     // KPIs
     // =========================

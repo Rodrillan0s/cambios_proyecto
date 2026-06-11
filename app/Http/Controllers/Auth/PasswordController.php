@@ -8,8 +8,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
+use Inertia\Inertia;
+use Inertia\Response;
+
 class PasswordController extends Controller
 {
+    /**
+     * Show the password change view.
+     */
+    public function changeView(Request $request): Response
+    {
+        return Inertia::render('Auth/ChangePassword');
+    }
+
     /**
      * Update the user's password.
      */
@@ -22,8 +33,9 @@ class PasswordController extends Controller
 
         $request->user()->update([
             'password' => Hash::make($validated['password']),
+            'cambiar_password' => false,
         ]);
 
-        return back();
+        return redirect()->route('dashboard');
     }
 }

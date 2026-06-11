@@ -27,11 +27,11 @@ class PostulanteController extends Controller
         ]);
     }
 
-public function index(Request $request)
+    public function index(Request $request)
     {
         if ($request->ajax() && !$request->header('X-Inertia')) {
             $postulantes = PostulanteService::listarPostulantes(
-                $request->only(['ci', 'nombre', 'carrera', 'estado_pago']),
+                $request->only(['ci', 'nombre', 'carrera', 'estado_pago', 'gestion']),
                 $request->get('per_page', 15)
             );
             return response()->json($postulantes);

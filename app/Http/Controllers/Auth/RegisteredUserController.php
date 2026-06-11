@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules;
-use App\Services\BitacoraService; // <-- Importación del servicio
+use App\Services\BitacoraService;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,12 +22,38 @@ class RegisteredUserController extends Controller
     {
         $usuarios = DB::table('cup.t_usuario as u')
             ->join('cup.t_rol as r', 'u.id_rol', '=', 'r.id_rol')
-            ->select('u.id_usuario', 'u.nombre', 'u.usuario', 'u.correo', 'u.estado', 'r.nombre as nombre_rol')
+            ->select('u.id_usuario', 'u.nombre', 'u.usuario', 'u.correo', 'u.estado', 'u.id_rol', 'r.nombre as nombre_rol')
             ->orderBy('u.id_usuario', 'desc')
             ->get();
 
+        $permisosUsuario = DB::table('cup.t_usuario_permiso')
+            ->select('id_usuario', 'id_permiso')
+            ->get()
+            ->groupBy('id_usuario')
+            ->map(function ($items) {
+                return $items->pluck('id_permiso')->all();
+            })
+            ->all();
+
+        foreach ($usuarios as $u) {
+            $u->permisos_directos = $permisosUsuario[$u->id_usuario] ?? [];
+        }
+
+        $roles = DB::table('cup.t_rol')
+            ->select('id_rol', 'nombre')
+            ->get();
+
+        $permisos = DB::table('cup.t_permisos as p')
+            ->join('cup.t_modulo as m', 'p.id_modulo', '=', 'm.id_modulo')
+            ->select('p.id_permiso', 'p.nombre_permiso', 'm.nombre as nombre_modulo')
+            ->orderBy('m.nombre')
+            ->orderBy('p.nombre_permiso')
+            ->get();
+
         return Inertia::render('Admin/Usuarios/Index', [
-            'usuarios' => $usuarios
+            'usuarios' => $usuarios,
+            'roles' => $roles,
+            'permisos' => $permisos
         ]);
     }
 
@@ -49,7 +75,7 @@ class RegisteredUserController extends Controller
     /**
      * Guardar el nuevo usuario.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $request->validate([
             'nombre'   => ['required', 'string', 'max:100'],
@@ -64,14 +90,29 @@ class RegisteredUserController extends Controller
 
         try {
             DB::transaction(function () use ($request) {
-                DB::table('cup.t_usuario')->insert([
+                $idUsuario = DB::table('cup.t_usuario')->insertGetId([
                     'nombre'   => $request->nombre,
                     'usuario'  => $request->usuario,
                     'correo'   => $request->correo,
                     'password' => Hash::make($request->password),
-                    'id_rol'   => 1,
+                    'id_rol'   => $request->id_rol,
                     'estado'   => true, 
-                ]);
+                    'cambiar_password' => true
+                ], 'id_usuario');
+
+                if ($request->has('permisos')) {
+                    $permisos = $request->input('permisos', []);
+                    $insertPayload = [];
+                    foreach ($permisos as $idPermiso) {
+                        $insertPayload[] = [
+                            'id_usuario' => $idUsuario,
+                            'id_permiso' => $idPermiso
+                        ];
+                    }
+                    if (!empty($insertPayload)) {
+                        DB::table('cup.t_usuario_permiso')->insert($insertPayload);
+                    }
+                }
 
                 BitacoraService::registrar(
                     'POSTULANTE',
@@ -83,10 +124,132 @@ class RegisteredUserController extends Controller
                 );
             });
 
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Usuario creado correctamente.'
+                ]);
+            }
+
             return redirect()->route('usuarios.index')->with('status', 'La cuenta fue creada correctamente.');
 
         } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al crear el usuario: ' . $e->getMessage()
+                ], 500);
+            }
             return back()->withErrors(['error' => 'Error al crear el usuario. Inténtelo de nuevo.'])->withInput();
+        }
+    }
+
+    /**
+     * Actualizar usuario y permisos asociados.
+     */
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'nombre'  => ['required', 'string', 'max:100'],
+            'usuario' => ['required', 'string', 'max:50', 'unique:cup.t_usuario,usuario,' . $id . ',id_usuario'],
+            'correo'  => ['required', 'string', 'email', 'max:100', 'unique:cup.t_usuario,correo,' . $id . ',id_usuario'],
+            'id_rol'  => ['required', 'integer', 'exists:cup.t_rol,id_rol'],
+            'estado'  => ['required', 'boolean'],
+        ]);
+
+        try {
+            DB::transaction(function () use ($request, $id) {
+                DB::table('cup.t_usuario')
+                    ->where('id_usuario', $id)
+                    ->update([
+                        'nombre'  => $request->nombre,
+                        'usuario' => $request->usuario,
+                        'correo'  => $request->correo,
+                        'id_rol'  => $request->id_rol,
+                        'estado'  => $request->estado,
+                    ]);
+
+                if ($request->has('permisos')) {
+                    $permisos = $request->input('permisos', []);
+
+                    DB::table('cup.t_usuario_permiso')
+                        ->where('id_usuario', $id)
+                        ->delete();
+
+                    $insertPayload = [];
+                    foreach ($permisos as $idPermiso) {
+                        $insertPayload[] = [
+                            'id_usuario' => $id,
+                            'id_permiso' => $idPermiso
+                        ];
+                    }
+
+                    if (!empty($insertPayload)) {
+                        DB::table('cup.t_usuario_permiso')->insert($insertPayload);
+                    }
+                }
+
+                BitacoraService::registrar(
+                    'POSTULANTE',
+                    'MODIFICAR USUARIO',
+                    "Usuario modificado: {$request->usuario} (ID: {$id}). Rol ID: {$request->id_rol}.",
+                    ['IP' => $request->ip()],
+                    Auth::id(),
+                    session('id_sesion')
+                );
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuario y permisos actualizados correctamente.'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al guardar cambios: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Eliminar usuario del sistema.
+     */
+    public function destroy(Request $request, $id)
+    {
+        if (Auth::id() == $id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No puedes eliminar tu propia cuenta.'
+            ], 400);
+        }
+
+        try {
+            DB::transaction(function () use ($request, $id) {
+                DB::table('cup.t_sesiones')->where('id_usuario', $id)->delete();
+                DB::table('cup.t_usuario_permiso')->where('id_usuario', $id)->delete();
+                DB::table('cup.t_bitacora')->where('id_usuario', $id)->update(['id_usuario' => null]);
+                DB::table('cup.t_usuario')->where('id_usuario', $id)->delete();
+
+                BitacoraService::registrar(
+                    'POSTULANTE',
+                    'ELIMINAR USUARIO',
+                    "Usuario eliminado con ID: {$id}.",
+                    ['IP' => $request->ip()],
+                    Auth::id(),
+                    session('id_sesion')
+                );
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuario eliminado correctamente.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede eliminar el usuario. Está referenciado en el sistema.'
+            ], 500);
         }
     }
 }

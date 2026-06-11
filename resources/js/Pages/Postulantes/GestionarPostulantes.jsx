@@ -16,7 +16,7 @@ export default function GestionarPostulantes() {
     const [postulantes, setPostulantes] = useState([]);
     const [meta, setMeta] = useState({});
     const [loading, setLoading] = useState(true);
-    const [filters, setFilters] = useState({ ci: '', nombre: '', estado_pago: '' });
+    const [filters, setFilters] = useState({ ci: '', nombre: '', estado_pago: '', gestion: '' });
     const [processing, setProcessing] = useState(false);
     const [currentId, setCurrentId] = useState(null);
 
@@ -184,6 +184,20 @@ export default function GestionarPostulantes() {
                                         <option value="">Todos</option>
                                         <option value="APROBADO">Aprobado</option>
                                         <option value="PENDIENTE">Pendiente</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-black text-blue-900 uppercase tracking-wide">Gestión</label>
+                                    <select className="mt-1 block w-36 rounded border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 font-bold" value={filters.gestion} onChange={e => setFilters({ ...filters, gestion: e.target.value })}>
+                                        <option value="">Todos</option>
+                                        <option value="202501">2025 - Gestión 1</option>
+                                        <option value="202502">2025 - Gestión 2</option>
+                                        <option value="202601">2026 - Gestión 1</option>
+                                        <option value="202602">2026 - Gestión 2</option>
+                                        <option value="202701">2027 - Gestión 1</option>
+                                        <option value="202702">2027 - Gestión 2</option>
+                                        <option value="202801">2028 - Gestión 1</option>
+                                        <option value="202802">2028 - Gestión 2</option>
                                     </select>
                                 </div>
                                 <button type="submit" className="bg-slate-900 text-white px-5 py-2 rounded text-sm font-bold hover:bg-slate-800 transition shadow">

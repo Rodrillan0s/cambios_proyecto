@@ -49,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::get('verify-email', EmailVerificationPromptController::class)->name('verification.notice');
     Route::get('verify-email/{id}/{hash}', VerifyEmailController::class)->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
     Route::post('email/verification-notification', [EmailVerificationNotificationController::class, 'store'])->middleware('throttle:6,1')->name('verification.send');
+    Route::get('change-password', [PasswordController::class, 'changeView'])->name('password.change');
     Route::get('confirm-password', [ConfirmablePasswordController::class, 'show'])->name('password.confirm');
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
@@ -64,6 +65,8 @@ Route::middleware('auth')->group(function () {
         ->middleware('permiso:registrar_usuario')->name('usuarios.store');
     Route::put('/usuarios/{id}', [RegisteredUserController::class, 'update'])
         ->middleware('permiso:modificar_usuario')->name('usuarios.update');
+    Route::delete('/usuarios/{id}', [RegisteredUserController::class, 'destroy'])
+        ->middleware('permiso:modificar_usuario')->name('usuarios.destroy');
 
     // --- MÓDULO 2: POSTULANTES (Flujo 2 y 3: Gestión Interna) ---
     Route::get('/postulantes', [PostulanteController::class, 'index'])

@@ -31,7 +31,10 @@ class PostulanteController extends Controller
             ->get();
         return Inertia::render('Postulantes/Publico/PreInscripcion', [
             'carreras' => $carreras,
-            'paypalClientId' => config('services.paypal.client_id')
+            'paypalClientId' => config('services.paypal.client_id'),
+            'comprobanteId' => session('comprobante_id'),
+            'usuarioGenerado' => session('usuario_generado'),
+            'ciGenerado' => session('ci_generado'),
         ]);
     }
 
@@ -55,11 +58,27 @@ class PostulanteController extends Controller
             ], 422);
         }
 
-        $existeCUP = DB::table('t_postulante')->where('ci', $request->ci)->exists();
-        if ($existeCUP) {
+        $now = now();
+        $year = $now->year;
+        if ($now->month <= 6) {
+            $start = "{$year}-01-01 00:00:00";
+            $end = "{$year}-07-01 00:00:00";
+        } else {
+            $start = "{$year}-07-01 00:00:00";
+            $end = ($year + 1) . "-01-01 00:00:00";
+        }
+
+        $existeEnGestionActual = DB::table('t_postulante as p')
+            ->join('t_requisitos_postulante as r', 'p.id_postulante', '=', 'r.id_postulante')
+            ->where('p.ci', $request->ci)
+            ->where('r.fecha_registro', '>=', $start)
+            ->where('r.fecha_registro', '<', $end)
+            ->exists();
+
+        if ($existeEnGestionActual) {
             return response()->json([
                 'success' => false,
-                'message' => 'Esta Cédula de Identidad ya cuenta con un registro en la gestión actual.'
+                'message' => 'Esta Cédula de Identidad ya cuenta con un registro activo en la gestión actual.'
             ], 422);
         }
 
@@ -110,8 +129,25 @@ class PostulanteController extends Controller
             return back()->withErrors(['foto_bachiller' => 'El archivo físico de la libreta no se transmitió correctamente. Intente resubirlo.']);
         }
 
-        if (DB::table('t_postulante')->where('ci', $request->ci)->exists()) {
-            return back()->withErrors(['ci' => 'Esta Cédula de Identidad ya cuenta con un registro activo.']);
+        $now = now();
+        $year = $now->year;
+        if ($now->month <= 6) {
+            $start = "{$year}-01-01 00:00:00";
+            $end = "{$year}-07-01 00:00:00";
+        } else {
+            $start = "{$year}-07-01 00:00:00";
+            $end = ($year + 1) . "-01-01 00:00:00";
+        }
+
+        $existeEnGestionActual = DB::table('t_postulante as p')
+            ->join('t_requisitos_postulante as r', 'p.id_postulante', '=', 'r.id_postulante')
+            ->where('p.ci', $request->ci)
+            ->where('r.fecha_registro', '>=', $start)
+            ->where('r.fecha_registro', '<', $end)
+            ->exists();
+
+        if ($existeEnGestionActual) {
+            return back()->withErrors(['ci' => 'Esta Cédula de Identidad ya cuenta con un registro activo en la gestión actual.']);
         }
 
         $paypalBaseUrl = config('services.paypal.base_url');
@@ -178,7 +214,14 @@ class PostulanteController extends Controller
                 $pathBachiller
             );
 
-            return redirect()->route('postulantes.comprobante', $idPostulanteCreado);
+            $postulante = DB::table('t_postulante')->where('id_postulante', $idPostulanteCreado)->first();
+            $usuario = DB::table('t_usuario')->where('correo', $postulante->correo)->first();
+            $username = $usuario ? $usuario->usuario : '';
+
+            return redirect()->route('postulantes.create.publico')
+                ->with('comprobante_id', $idPostulanteCreado)
+                ->with('usuario_generado', $username)
+                ->with('ci_generado', $postulante->ci);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Error transaccional: ' . $e->getMessage()])->withInput();
         }

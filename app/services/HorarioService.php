@@ -37,6 +37,10 @@ class HorarioService
             $query->where('dia_semana', $filtros['dia_semana']);
         }
 
+        if (!empty($filtros['gestion'])) {
+            $query->where('gestion', $filtros['gestion']);
+        }
+
         return $query
             ->orderBy('id_grupo')
             ->orderBy('dia_semana')

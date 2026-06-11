@@ -44,12 +44,37 @@ class GrupoController extends Controller
             'gestion' => 'required|string|size:6'
         ]);
 
-        GrupoService::generarGrupos($request->gestion);
+        try {
+            GrupoService::generarGrupos($request->gestion);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Grupos generados correctamente'
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            $message = $e->getMessage();
+            if ($e->getCode() === 'P0001' || str_contains($message, 'ERROR:')) {
+                if (preg_match('/ERROR:\s*(.+?)(?:\r?\n|CONTEXT|$)/s', $message, $matches)) {
+                    $errorText = trim($matches[1]);
+                } else {
+                    $errorText = 'Error en la base de datos al generar grupos.';
+                }
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorText
+                ], 400);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Grupos generados correctamente'
-        ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de base de datos: ' . $e->getMessage()
+            ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     // =========================
