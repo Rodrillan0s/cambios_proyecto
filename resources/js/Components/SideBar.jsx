@@ -1,18 +1,44 @@
 import { Link } from '@inertiajs/react';
 import NavLink from '@/Components/NavLink';
 
-export default function Sidebar({ user }) {
+export default function Sidebar({ user, onClose }) {
+    const rol = user?.id_rol;
+    const isAdmin = rol === 1;
+    const isDocente = rol === 2;
+    const isPostulante = rol === 3;
+    const isAutoridad = rol === 4;
+    const isCoordinador = rol === 5;
+
+    const roleNames = {
+        1: 'Administrador',
+        2: 'Docente',
+        3: 'Postulante',
+        4: 'Autoridad',
+        5: 'Coordinador'
+    };
+
     return (
         <aside className="w-64 min-h-screen bg-slate-800 text-white flex flex-col">
 
             {/* ================= LOGO ================= */}
-            <div className="h-16 flex items-center px-6 border-b border-slate-700">
+            <div className="h-16 flex items-center justify-between px-6 border-b border-slate-700">
                 <Link
                     href={route('dashboard')}
                     className="font-semibold text-sm tracking-wide text-white"
                 >
                     SISTEMA
                 </Link>
+                {onClose && (
+                    <button 
+                        onClick={onClose}
+                        className="lg:hidden p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-xl"
+                        title="Cerrar menú"
+                    >
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                )}
             </div>
 
             {/* ================= NAV ================= */}
@@ -31,87 +57,120 @@ export default function Sidebar({ user }) {
                     Dashboard
                 </NavLink>
 
-                {/* ADMISION */}
+                {/* ADMISION - visible only for Admin and Coordinador */}
+                {(isAdmin || isCoordinador) && (
+                    <>
+                        <p className="text-xs text-slate-400 uppercase mt-6 mb-2">
+                            Admisión
+                        </p>
+
+                        <NavLink
+                            href={route('admin.postulantes.index')}
+                            active={route().current('admin.postulantes.*')}
+                            className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                        >
+                            Postulantes
+                        </NavLink>
+
+                        <NavLink
+                            href={route('admin.grupos.index')}
+                            active={route().current('admin.grupos.*')}
+                            className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                        >
+                            Grupos
+                        </NavLink>
+
+                        <NavLink
+                            href={route('admin.horarios.index')}
+                            active={route().current('admin.horarios.*')}
+                            className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                        >
+                            Horarios
+                        </NavLink>
+
+                        <NavLink
+                            href={route('admin.docentes.index')}
+                            active={route().current('admin.docentes.*')}
+                            className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                        >
+                            Docentes
+                        </NavLink>
+
+                        <NavLink
+                            href={route('admin.asistencias.index')}
+                            active={route().current('admin.asistencias.*')}
+                            className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                        >
+                            Control de Asistencia
+                        </NavLink>
+
+                        <NavLink
+                            href={route('admin.licencias.index')}
+                            active={route().current('admin.licencias.*')}
+                            className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                        >
+                            Licencias Docente
+                        </NavLink>
+                    </>
+                )}
+
+                {/* SISTEMA / CONFIGURACIÓN - visible to Admin, Coordinador, Autoridad as appropriate */}
+                {(isAdmin || isCoordinador || isAutoridad) && (
+                    <>
+                        <p className="text-xs text-slate-400 uppercase mt-6 mb-2">
+                            Sistema
+                        </p>
+
+                        {/* Bitácora - Admin only */}
+                        {isAdmin && (
+                            <NavLink
+                                href={route('admin.bitacora.index')}
+                                active={route().current('admin.bitacora.*')}
+                                className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                            >
+                                Bitácora
+                            </NavLink>
+                        )}
+
+                        <NavLink
+                            href={route('admin.desempeno.index')}
+                            active={route().current('admin.desempeno.*')}
+                            className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                        >
+                            Desempeño Final
+                        </NavLink>
+
+                        <NavLink
+                            href={route('admin.reportes.index')}
+                            active={route().current('admin.reportes.*')}
+                            className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                        >
+                            Reportes
+                        </NavLink>
+
+                        {/* Usuarios - Admin only */}
+                        {isAdmin && (
+                            <NavLink
+                                href={route('usuarios.index')}
+                                active={route().current('usuarios.*')}
+                                className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
+                            >
+                                Usuarios
+                            </NavLink>
+                        )}
+                    </>
+                )}
+
+                {/* CUENTA - visible for all */}
                 <p className="text-xs text-slate-400 uppercase mt-6 mb-2">
-                    Admisión
+                    Mi Cuenta
                 </p>
-
                 <NavLink
-                    href={route('admin.postulantes.index')}
-                    active={route().current('admin.postulantes.*')}
+                    href={route('profile.edit')}
+                    active={route().current('profile.edit')}
                     className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
                 >
-                    Postulantes
-                </NavLink>
-
-                <NavLink
-                    href={route('admin.grupos.index')}
-                    active={route().current('admin.grupos.*')}
-                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
-                >
-                    Grupos
-                </NavLink>
-
-                <NavLink
-                    href={route('admin.horarios.index')}
-                    active={route().current('admin.horarios.*')}
-                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
-                >
-                    Horarios
-                </NavLink>
-
-                <NavLink
-                    href={route('admin.docentes.index')}
-                    active={route().current('admin.docentes.*')}
-                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
-                >
-                    Docentes
-                </NavLink>
-
-                <NavLink
-                    href={route('admin.asistencias.index')}
-                    active={route().current('admin.asistencias.*')}
-                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
-                >
-                    Control de Asistencia
-                </NavLink>
-
-                <NavLink
-                    href={route('admin.licencias.index')}
-                    active={route().current('admin.licencias.*')}
-                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
-                >
-                    Licencias Docente
-                </NavLink>
-
-                {/* SISTEMA */}
-                <p className="text-xs text-slate-400 uppercase mt-6 mb-2">
-                    Sistema
-                </p>
-
-                <NavLink
-                    href={route('admin.bitacora.index')}
-                    active={route().current('admin.bitacora.*')}
-                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
-                >
-                    Bitácora
-                </NavLink>
-
-                {/* ================= NUEVO ================= */}
-                <NavLink
-                    href={route('admin.desempeno.index')}
-                    active={route().current('admin.desempeno.*')}
-                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
-                >
-                    Desempeño Final
-                </NavLink>
-
-                <NavLink
-                    href={route('usuarios.index')}
-                    active={route().current('usuarios.*')}
-                    className="block px-3 py-2 rounded-md text-sm text-slate-200 hover:bg-slate-700 transition"
-                >
-                    Usuarios
+                    Mi Perfil
                 </NavLink>
 
             </nav>
@@ -125,6 +184,10 @@ export default function Sidebar({ user }) {
 
                 <div className="text-slate-400 text-xs truncate">
                     {user?.email}
+                </div>
+
+                <div className="text-xs font-bold text-indigo-400 mt-1.5 uppercase tracking-wide">
+                    {roleNames[rol] || 'Usuario'}
                 </div>
 
             </div>

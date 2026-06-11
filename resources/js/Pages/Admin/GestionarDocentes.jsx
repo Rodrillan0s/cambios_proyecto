@@ -54,7 +54,7 @@ export default function GestionarDocentes() {
 
             setDocentes(resDoc.data || []);
             setMaterias(resMat.data || []);
-            setGrupos(resGru.data || []);
+            setGrupos(resGru.data.grupos || resGru.data || []);
 
         } catch (e) {
             console.error("Error cargando datos:", e);
@@ -493,7 +493,7 @@ export default function GestionarDocentes() {
                         </div>
 
                         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs font-bold text-slate-700">Cédula de Identidad (CI)</label>
                                     <input
@@ -516,7 +516,7 @@ export default function GestionarDocentes() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs font-bold text-slate-700">Nombres</label>
                                     <input
@@ -539,7 +539,7 @@ export default function GestionarDocentes() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs font-bold text-slate-700">Teléfono</label>
                                     <input

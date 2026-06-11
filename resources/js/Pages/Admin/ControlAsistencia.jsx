@@ -266,10 +266,10 @@ export default function ControlAsistencia() {
 
                 </div>
 
-                <div className="bg-white border rounded p-4 flex flex-wrap gap-2">
+                <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-sm flex flex-col md:flex-row md:flex-wrap items-stretch md:items-center gap-3">
 
                     <select
-                        className="border rounded p-2"
+                        className="rounded-xl border-slate-200 text-xs focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-slate-700 py-2 pl-3 pr-10"
                         value={filtros.grupo}
                         onChange={(e) =>
                             setFiltros({
@@ -290,7 +290,7 @@ export default function ControlAsistencia() {
                     </select>
 
                     <select
-                        className="border rounded p-2"
+                        className="rounded-xl border-slate-200 text-xs focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-slate-700 py-2 pl-3 pr-10"
                         value={filtros.docente}
                         onChange={(e) =>
                             setFiltros({
@@ -311,7 +311,7 @@ export default function ControlAsistencia() {
                     </select>
 
                     <select
-                        className="border rounded p-2"
+                        className="rounded-xl border-slate-200 text-xs focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-slate-700 py-2 pl-3 pr-10"
                         value={filtros.materia}
                         onChange={(e) =>
                             setFiltros({
@@ -332,7 +332,7 @@ export default function ControlAsistencia() {
                     </select>
 
                     <select
-                        className="border rounded p-2"
+                        className="rounded-xl border-slate-200 text-xs focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-slate-700 py-2 pl-3 pr-10"
                         value={filtros.estado}
                         onChange={(e) =>
                             setFiltros({
@@ -361,7 +361,7 @@ export default function ControlAsistencia() {
 
                     <input
                         type="date"
-                        className="border rounded p-2"
+                        className="rounded-xl border-slate-200 text-xs focus:border-indigo-500 focus:ring-indigo-500 font-semibold text-slate-700 py-2 px-3"
                         value={filtros.fecha}
                         onChange={(e) =>
                             setFiltros({
@@ -372,7 +372,7 @@ export default function ControlAsistencia() {
                     />
 
                     <button
-                        className="bg-gray-200 px-3 rounded"
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 px-4 rounded-xl transition shadow-sm"
                         onClick={() =>
                             setFiltros({
                                 grupo: "",
@@ -385,19 +385,20 @@ export default function ControlAsistencia() {
                     >
                         Limpiar
                     </button>
-                  <button
-    onClick={exportarExcel}
-    className="bg-green-700 text-white px-4 py-2 rounded"
->
-    Exportar Excel
-</button>
 
-<button
-    onClick={exportarPDF}
-    className="bg-red-700 text-white px-4 py-2 rounded"
->
-    Exportar PDF
-</button>
+                    <button
+                        onClick={exportarExcel}
+                        className="bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-850 text-xs font-bold py-2 px-4 rounded-xl transition shadow-sm"
+                    >
+                        Exportar Excel
+                    </button>
+
+                    <button
+                        onClick={exportarPDF}
+                        className="bg-rose-50 hover:bg-rose-100 border border-rose-100 text-rose-850 text-xs font-bold py-2 px-4 rounded-xl transition shadow-sm"
+                    >
+                        Exportar PDF
+                    </button>
                 </div>
 
                 {loading ? (

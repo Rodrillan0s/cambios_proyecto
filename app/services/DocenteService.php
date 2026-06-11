@@ -28,23 +28,60 @@ class DocenteService
         return $docentes;
     }
 
+    private static function quitarAcentos($cadena)
+    {
+        $acentos = [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u',
+            'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U',
+            'ñ' => 'n', 'Ñ' => 'N'
+        ];
+        return strtr($cadena, $acentos);
+    }
+
     public static function registrar(array $data)
     {
-        $id = DB::table('cup.t_docente')->insertGetId([
-            'ci' => $data['ci'],
-            'nombres' => $data['nombres'],
-            'apellidos' => $data['apellidos'],
-            'telefono' => $data['telefono'] ?? null,
-            'correo' => $data['correo'] ?? null,
-        ], 'id_docente');
+        $id = null;
+        DB::transaction(function() use ($data, &$id) {
+            $id = DB::table('cup.t_docente')->insertGetId([
+                'ci' => $data['ci'],
+                'nombres' => $data['nombres'],
+                'apellidos' => $data['apellidos'],
+                'telefono' => $data['telefono'] ?? null,
+                'correo' => $data['correo'] ?? null,
+            ], 'id_docente');
 
-        DB::table('cup.t_requisitos_docente')->insert([
-            'id_docente' => $id,
-            'maestria' => isset($data['maestria']) ? (bool)$data['maestria'] : false,
-            'diplomado_es' => isset($data['diplomado_es']) ? (bool)$data['diplomado_es'] : false,
-            'profesion' => $data['profesion'] ?? null,
-            'fecha_registro' => now(),
-        ]);
+            DB::table('cup.t_requisitos_docente')->insert([
+                'id_docente' => $id,
+                'maestria' => isset($data['maestria']) ? (bool)$data['maestria'] : false,
+                'diplomado_es' => isset($data['diplomado_es']) ? (bool)$data['diplomado_es'] : false,
+                'profesion' => $data['profesion'] ?? null,
+                'fecha_registro' => now(),
+            ]);
+
+            // GENERAR USUARIO Y CONTRASEÑA PARA EL DOCENTE
+            $primerNombre = explode(' ', trim(strtolower(self::quitarAcentos($data['nombres']))))[0];
+            $primerApellido = explode(' ', trim(strtolower(self::quitarAcentos($data['apellidos']))))[0];
+            $slugUsuario = $primerNombre . '.' . $primerApellido . substr($data['ci'], -3);
+
+            $usuarioExistente = DB::table('cup.t_usuario')->where('usuario', $slugUsuario)->first();
+
+            if (!$usuarioExistente) {
+                DB::table('cup.t_usuario')->insert([
+                    'usuario' => $slugUsuario,
+                    'password' => bcrypt($data['ci']),
+                    'nombre' => $data['nombres'] . ' ' . $data['apellidos'],
+                    'correo' => $data['correo'] ?? ($slugUsuario . '@ficct.uagrm.edu.bo'),
+                    'estado' => true,
+                    'id_rol' => 2, // DOCENTE
+                    'cambiar_password' => true,
+                ]);
+            } else {
+                DB::table('cup.t_usuario')->where('id_usuario', $usuarioExistente->id_usuario)->update([
+                    'nombre' => $data['nombres'] . ' ' . $data['apellidos'],
+                    'correo' => $data['correo'] ?? $usuarioExistente->correo,
+                ]);
+            }
+        });
 
         return $id;
     }
@@ -52,6 +89,8 @@ class DocenteService
     public static function actualizar($id, array $data)
     {
         DB::transaction(function() use ($id, $data) {
+            $docenteAntes = DB::table('cup.t_docente')->where('id_docente', $id)->first();
+
             DB::table('cup.t_docente')
                 ->where('id_docente', $id)
                 ->update([
@@ -71,6 +110,36 @@ class DocenteService
                         'profesion' => $data['profesion'] ?? null,
                     ]
                 );
+
+            if ($docenteAntes) {
+                $usuarioExistente = DB::table('cup.t_usuario')
+                    ->where('correo', $docenteAntes->correo)
+                    ->orWhere('usuario', 'like', '%' . substr($docenteAntes->ci, -3))
+                    ->first();
+
+                if ($usuarioExistente) {
+                    DB::table('cup.t_usuario')
+                        ->where('id_usuario', $usuarioExistente->id_usuario)
+                        ->update([
+                            'nombre' => $data['nombres'] . ' ' . $data['apellidos'],
+                            'correo' => $data['correo'] ?? null,
+                        ]);
+                } else {
+                    $primerNombre = explode(' ', trim(strtolower(self::quitarAcentos($data['nombres']))))[0];
+                    $primerApellido = explode(' ', trim(strtolower(self::quitarAcentos($data['apellidos']))))[0];
+                    $slugUsuario = $primerNombre . '.' . $primerApellido . substr($data['ci'], -3);
+
+                    DB::table('cup.t_usuario')->insert([
+                        'usuario' => $slugUsuario,
+                        'password' => bcrypt($data['ci']),
+                        'nombre' => $data['nombres'] . ' ' . $data['apellidos'],
+                        'correo' => $data['correo'] ?? ($slugUsuario . '@ficct.uagrm.edu.bo'),
+                        'estado' => true,
+                        'id_rol' => 2, // DOCENTE
+                        'cambiar_password' => true,
+                    ]);
+                }
+            }
         });
 
         return ['ok' => true, 'msg' => 'Docente actualizado correctamente'];

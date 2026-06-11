@@ -3,7 +3,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { usePage } from "@inertiajs/react";
 import axios from "axios";
 
-export default function Index({ usuarios: initialUsuarios, roles, permisos }) {
+export default function Index({ usuarios: initialUsuarios, roles, permisos, rolPermisos = {} }) {
     const currentUser = usePage().props.auth.user;
 
     const [usuarios, setUsuarios] = useState(initialUsuarios || []);
@@ -425,7 +425,7 @@ export default function Index({ usuarios: initialUsuarios, roles, permisos }) {
                         </div>
 
                         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs font-bold text-slate-700">Nombre Completo</label>
                                     <input
@@ -449,7 +449,7 @@ export default function Index({ usuarios: initialUsuarios, roles, permisos }) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs font-bold text-slate-700">Correo Electrónico</label>
                                     <input
@@ -478,7 +478,7 @@ export default function Index({ usuarios: initialUsuarios, roles, permisos }) {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs font-bold text-slate-700">Contraseña</label>
                                     <input
@@ -630,26 +630,37 @@ export default function Index({ usuarios: initialUsuarios, roles, permisos }) {
                                             </span>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                                                 {permisosAgrupados[moduloName].map(p => {
-                                                    const isChecked = editarForm.permisos.includes(p.id_permiso);
+                                                    const isInherited = rolPermisos[editarForm.id_rol]?.includes(p.id_permiso);
+                                                    const isChecked = isInherited || editarForm.permisos.includes(p.id_permiso);
 
                                                     return (
                                                         <label
                                                             key={p.id_permiso}
-                                                            className={`flex items-start gap-2.5 border rounded-xl p-2.5 text-[11px] font-semibold cursor-pointer transition select-none ${
-                                                                isChecked 
-                                                                    ? "bg-indigo-50/50 border-indigo-200 text-indigo-900" 
-                                                                    : "bg-white hover:bg-slate-100/50 border-slate-200 text-slate-600"
+                                                            className={`flex items-center justify-between gap-2.5 border rounded-xl p-2.5 text-[11px] font-semibold transition select-none ${
+                                                                isInherited
+                                                                    ? "bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed opacity-80"
+                                                                    : isChecked 
+                                                                        ? "bg-indigo-50/50 border-indigo-200 text-indigo-900 cursor-pointer" 
+                                                                        : "bg-white hover:bg-slate-100/50 border-slate-200 text-slate-600 cursor-pointer"
                                                             }`}
                                                         >
-                                                            <input
-                                                                type="checkbox"
-                                                                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 mt-0.5"
-                                                                checked={isChecked}
-                                                                onChange={() => togglePermisoEditar(p.id_permiso)}
-                                                            />
-                                                            <span className="leading-tight break-all uppercase tracking-wide">
-                                                                {p.nombre_permiso.replace(/_/g, " ")}
-                                                            </span>
+                                                            <div className="flex items-start gap-2">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-3.5 w-3.5 mt-0.5"
+                                                                    checked={isChecked}
+                                                                    disabled={isInherited}
+                                                                    onChange={() => togglePermisoEditar(p.id_permiso)}
+                                                                />
+                                                                <span className="leading-tight break-all uppercase tracking-wide">
+                                                                    {p.nombre_permiso.replace(/_/g, " ")}
+                                                                </span>
+                                                            </div>
+                                                            {isInherited && (
+                                                                <span className="text-[8px] bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded font-black uppercase tracking-wider shrink-0">
+                                                                    Heredado
+                                                                </span>
+                                                            )}
                                                         </label>
                                                     );
                                                 })}
